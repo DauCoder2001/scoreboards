@@ -12,6 +12,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="theme-color" content="#0d88d0">
+  <link rel="manifest" href="manifest.json">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1">
   <title>Billard-Scoreboards</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%231a1a1a'/%3E%3Ccircle cx='24' cy='22' r='8' fill='%23ffffff' opacity='0.18'/%3E%3Ccircle cx='32' cy='32' r='15' fill='%23fdfdf2'/%3E%3Ctext x='32' y='39' font-family='Arial, Helvetica, sans-serif' font-size='22' font-weight='bold' fill='%23111' text-anchor='middle'%3E8%3C/text%3E%3C/svg%3E">
@@ -19,7 +20,7 @@
     * { box-sizing: border-box; }
     body {
       font-family: Arial, sans-serif; color: #fff;
-      margin: 0; min-height: 100vh; display: flex; flex-direction: column;
+      margin: 0; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column;
       align-items: center; justify-content: center; padding: 4vmin;
       touch-action: manipulation;
       /* "Ocean Blue" Billardtuch (Z9 Billiard Cloth): Farbe + diagonale Koeperbindung
@@ -44,7 +45,7 @@
       text-decoration: none; display: inline-flex; align-items: center; gap: 1.2vmin;
     }
     /* Tuch-Sponsor (unten rechts) – transparentes Logo direkt auf dem Tuch */
-    .z9-badge { position: fixed; right: 3vmin; bottom: 3vmin; display: flex; align-items: center; }
+    .z9-badge { position: fixed; right: 3vmin; bottom: calc(3vmin + env(safe-area-inset-bottom)); display: flex; align-items: center; }
     .z9-badge svg { width: 4.25vmin; height: 4.25vmin; display: block; filter: drop-shadow(0 0.2vmin 0.45vmin rgba(0,0,0,.45)); }
   </style>
 </head>

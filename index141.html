@@ -11,6 +11,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#0d88d0">
+<link rel="manifest" href="manifest.json">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1">
 <title>14.1 Scoreboard – Standalone</title>
 
@@ -44,7 +46,9 @@
     display: flex;
     flex-direction: column;
     height: 100vh;
+    height: 100dvh;       /* iOS: echte sichtbare Hoehe, auch mit Adressleiste */
     min-height: 100vh;
+    min-height: 100dvh;
   }
 
   /* Header: 3 Spalten (links | Titel | rechts), Titel bleibt zentriert */
@@ -290,7 +294,7 @@
     align-items: flex-end;
     justify-content: space-between;
     gap: 1vmin;
-    padding: 0.4vmin 1.5vmin 1vmin 1.5vmin;
+    padding: 0.4vmin 1.5vmin calc(1vmin + env(safe-area-inset-bottom)) 1.5vmin;   /* iOS: Home-Indikator freihalten */
     flex: 0 0 auto;
   }
   #bottom-bar button { margin: 0; }

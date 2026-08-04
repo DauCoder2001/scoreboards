@@ -18,6 +18,7 @@ kein Server, keine Installation. Der Spielstand wird lokal im Browser
 | `index.html`      | Startseite (Spielart-Auswahl) |
 | `index_pool.html` | 8/9/10-Ball-Scoreboard |
 | `index141.html`   | 14.1-endlos-Scoreboard |
+| `manifest.json`   | Web-App-Manifest (Vollbild ohne Adressleiste auf dem Tablet) |
 | `LICENSE`         | MIT-Lizenz |
 
 ## Lizenz

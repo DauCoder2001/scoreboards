@@ -87,9 +87,9 @@
 
   /* Hilfe / Neues Match in der Kopfzeile (kompakt wie Demo, helleres Blau) */
   .hdr-btn {
-    font-size: 2.4vmin;
+    font-size: 2vmin;
     line-height: 1;
-    padding: 0.6vmin 1.4vmin;
+    padding: 0.4vmin 1.2vmin;   /* kompakt, wie #home-btn */
     margin: 0;
     border: none;
     border-radius: 1vmin;
@@ -542,6 +542,7 @@
     <div class="hdr-left">
       <button id="home-btn" type="button" title="Zur Startseite" onclick="window.location.href='index.html'">🏠</button>
       <button id="helpBtn" class="hdr-btn" type="button" onclick="openHelp()">❓ Hilfe</button>
+      <button id="fsBtn" class="hdr-btn" type="button" title="Vollbild">⤢ Vollbild</button>
     </div>
     <div id="hdr-title">14.1 SCOREBOARD</div>
     <div class="hdr-right">
@@ -1324,6 +1325,36 @@
       document.addEventListener(ev, acquire, { passive: true });
     });
     setInterval(acquire, 30000);
+  })();
+
+  // Vollbild-Umschalter fuer den Kopfzeilen-Button. Inline-Variante fuer das
+  // Standalone-Bundle (kein ES-Modul; vgl. js/fullscreen.js im Haupt-Repo).
+  (function () {
+    var btn = document.getElementById('fsBtn');
+    if (!btn) return;
+    var root = document.documentElement;
+    var canFullscreen = !!(root.requestFullscreen || root.webkitRequestFullscreen);
+    var chromeless = window.navigator.standalone === true ||
+                     window.matchMedia('(display-mode: standalone)').matches ||
+                     window.matchMedia('(display-mode: fullscreen)').matches;
+    if (!canFullscreen || chromeless) { btn.style.display = 'none'; return; }
+
+    function isFullscreen() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+    function sync() { btn.textContent = isFullscreen() ? '⤡ Beenden' : '⤢ Vollbild'; }
+
+    btn.addEventListener('click', function () {
+      try {
+        var p = isFullscreen()
+          ? (document.exitFullscreen || document.webkitExitFullscreen).call(document)
+          : (root.requestFullscreen || root.webkitRequestFullscreen).call(root);
+        if (p && typeof p.catch === 'function') p.catch(function () {});
+      } catch (e) { /* abgelehnt - Beschriftung bleibt unveraendert */ }
+    });
+
+    ['fullscreenchange', 'webkitfullscreenchange'].forEach(function (ev) {
+      document.addEventListener(ev, sync);
+    });
+    sync();
   })();
 </script>
 </body>

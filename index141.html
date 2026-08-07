@@ -87,9 +87,9 @@
 
   /* Hilfe / Neues Match in der Kopfzeile (kompakt wie Demo, helleres Blau) */
   .hdr-btn {
-    font-size: 2vmin;
+    font-size: 2.4vmin;
     line-height: 1;
-    padding: 0.4vmin 1.2vmin;   /* kompakt, wie #home-btn */
+    padding: 0.7vmin 1.5vmin;   /* gleiche Hoehe wie #home-btn (3.8vmin), Inhalt kleiner */
     margin: 0;
     border: none;
     border-radius: 1vmin;
@@ -764,6 +764,15 @@
         <span><span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:#7a1f1f;vertical-align:-1px;"></span> 15. Kugel</span>
         <span>gestrichelt = Zielposition · Pfeil = wird verlegt</span>
       </div>
+
+      <h3 style="border-top:1px solid #eee;padding-top:14px;margin-top:16px;">📊 Die Werte unter den Namen</h3>
+      <p>Unter jedem Spieler stehen vier Werte, die das Board mitrechnet:</p>
+      <ul>
+        <li><b>Run</b> – Punkte der <b>laufenden</b> Aufnahme. Läuft weiter, solange der Spieler am Tisch ist – auch über einen Neuaufbau hinweg – und springt beim Aufnahmewechsel zurück auf 0.</li>
+        <li><b>HS</b> – <b>Höchstserie</b>: das beste Ergebnis einer <b>einzelnen</b> Aufnahme im laufenden Match. Foulpunkte derselben Aufnahme werden vorher abgezogen – 10 Bälle und danach ein Foul zählen als <b>9</b>. Im <b>📋 Protokoll</b> ist die HS gelb markiert.</li>
+        <li><b>Aufn.</b> – Zahl der <b>beendeten</b> Aufnahmen. Die laufende zählt erst mit, wenn sie durch <b>➜ Verschossen</b>, <b>⚠ Foul</b> oder <b>🛡 Sicherheit</b> endet.</li>
+        <li><b>Ø</b> – <b>Punkte ÷ beendete Aufnahmen</b>, auf eine Nachkommastelle gerundet. Die Punkte wachsen mit jeder Kugel, die Aufnahmen springen erst beim Wechsel – der Ø <b>steigt</b> deshalb während einer Serie und <b>fällt</b> beim Aufnahmewechsel wieder. Solange noch keine Aufnahme beendet ist, zeigt er einfach die bisherigen Punkte; durch Fouls kann er negativ werden.</li>
+      </ul>
 
       <div class="hint">Diese Demo speichert den Spielstand lokal in deinem Browser (kein Server, keine Anmeldung).</div>
     </div>

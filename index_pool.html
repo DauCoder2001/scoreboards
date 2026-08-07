@@ -53,9 +53,9 @@
   }
   /* Hilfe / Neues Match in der Kopfzeile (kompakt, helleres Blau, wie 14.1) */
   .hdr-btn {
-    font-size: 2vmin;
+    font-size: 2.4vmin;
     line-height: 1;
-    padding: 0.4vmin 1.2vmin;   /* kompakt, wie #home-btn */
+    padding: 0.7vmin 1.5vmin;   /* gleiche Hoehe wie #home-btn (3.8vmin), Inhalt kleiner */
     margin: 0;
     border: none;
     border-radius: 1vmin;
@@ -95,17 +95,25 @@
   .edit-btn { font-size: 2.5vmin; margin-top: 1vmin; cursor: pointer; }
 
   /* Score Hauptbereich */
+  /* Tippflaechen: die Klick-Listener haengen an #s1/#s2, also an der ganzen Grid-Zelle.
+     Die Polsterung HIER schneidet Flaeche weg (tote Zonen am Rand und auf dem Doppelpunkt),
+     die Polsterung in #s1/#s2/#colon verschiebt nur den Inhalt und laesst die Zelle voll.
+     - Mittelspalte 12vmin = senkrechte tote Zone auf dem Doppelpunkt
+     - aussen 8vmin seitlich / 12vmin unten Abstand zu Bildschirmrand und unterer Leiste
+     - Ausgleich, damit die Ziffern unter den ✏️-Buttons bleiben:
+       L = 4 − seitlich + Mitte/2 = 4 − 8 + 6 = 2vmin
+     - Ziffernhoehe unveraendert 7vmin: (unten 12 + innen 2) / 2 */
   #scores {
-    display: grid; grid-template-columns: 1fr auto 1fr;
+    display: grid; grid-template-columns: 1fr 12vmin 1fr; padding: 0 8vmin 12vmin;
     flex: 1 1 auto; min-height: 20vh; position: relative; z-index: 1;
   }
   .score {
     display: flex; justify-content: center; align-items: center;
     font-size: 30vmin; font-weight: bold; user-select: none; cursor: pointer;
   }
-  #s1 { color: red; }
-  #s2 { color: blue; }
-  #colon { font-size: 12vmin; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+  #s1 { color: red;  padding: 0 0 2vmin 2vmin; }
+  #s2 { color: blue; padding: 0 2vmin 2vmin 0; }
+  #colon { font-size: 12vmin; font-weight: bold; display: flex; align-items: center; justify-content: center; padding-bottom: 2vmin; }
 
   /* Untere Leiste (wie 14.1): Undo links, Seitenwechsel mittig */
   #bottom-bar {

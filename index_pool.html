@@ -145,8 +145,15 @@
   #help-head button { background: rgba(255,255,255,.16); color: #fff; border: none;
     border-radius: 7px; padding: 6px 11px; font-size: 14px; margin: 0; cursor: pointer; }
   #help-head-actions { display: flex; align-items: center; gap: 8px; }
-  #help-head #breakModeBtn { background: #3461a8; font-weight: bold; font-size: 13px; border: 1px solid transparent; }
-  #help-head #breakModeBtn.on { border-color: #ffd27f; }
+  /* Einstellungs-Dialog (Race to + Anstoss) – ergaenzt die .app-dlg-*-Klassen.
+     Die Auswahl muss ".app-dlg-box ..." mitfuehren: die dortige Regel ".app-dlg-box button"
+     ist spezifischer als eine einzelne Klasse und wuerde sonst Farbe und Rahmen ueberschreiben. */
+  .set-dlg-label { font-size: 15px; line-height: 1.5; margin-top: 16px; }
+  .set-dlg-hint { font-size: 13px; color: #666; margin-top: 6px; }
+  .app-dlg-box .set-dlg-break { background: #3461a8; color: #fff; font-weight: bold; font-size: 14px;
+    border: 1px solid transparent; border-radius: 7px; padding: 9px 18px; margin-top: 6px; cursor: pointer; }
+  .app-dlg-box .set-dlg-break:hover { background: #2a4f8a; }
+  .app-dlg-box .set-dlg-break.on { border-color: #ffd27f; }
   #help-body { overflow-y: auto; padding: 4px 18px 16px; font-size: 15px; line-height: 1.5;
     color: #222; min-height: 18vh; }
   #help-body h3 { color: #1f3b73; font-size: 15px; margin: 14px 0 4px; }
@@ -277,7 +284,7 @@
 
 <div id="pool-target">
   Race to: <span id="raceToVal">—</span>
-  <button id="raceToBtn" type="button" onclick="setRaceTo()">⚙️</button>
+  <button id="raceToBtn" type="button" title="Einstellungen: Race to und Anstoß" onclick="setRaceTo()">⚙️</button>
 </div>
 
 <div id="players">
@@ -320,12 +327,22 @@
     <div id="help-head">
       <div id="help-title">❓ Regeln – 8/9/10-Ball (Kurzfassung)</div>
       <div id="help-head-actions">
-        <button id="breakModeBtn" type="button" title="Break-Modus umschalten">Wechsel-Break</button>
         <button id="helpCloseBtn" type="button">✕ Schließen</button>
       </div>
     </div>
     <div id="help-body">
-      <h3>Allgemeine Regeln (für 8-, 9- und 10-Ball)</h3>
+      <h3>So bedienst du das Board</h3>
+      <ul>
+        <li><b>Punkte zählen</b> – Tippe auf die <b>große Zahl</b> des Spielers, der den Satz gewonnen hat. Das zählt einen Satz und stellt zugleich den nächsten Anstoß um.</li>
+        <li><b>Anstoß &amp; Seiten</b> – Der erste Anstoß liegt beim <b>roten (linken)</b> Spieler. Mit <b>↔ Seitenwechsel</b> legst du fest, wer links steht – und damit anstößt. Der Seitenwechsel tauscht Namen <b>und</b> Punktestand mit; die Anzeige <i>Next Break</i> bleibt an der Seite, es wechselt also die Person, die anstößt.</li>
+        <li><b>Einstellungen</b> – Mit <b>⚙️</b> neben <i>Race to</i> öffnest du die Einstellungen für <b>Race to</b> und <b>Anstoß</b>. Beides wird erst mit <b>OK</b> übernommen.</li>
+        <li><b>Race to</b> – Wie viele Sätze zum Sieg nötig sind; leer lassen heißt kein Ziel (Anzeige „—“). Ist das Ziel erreicht, sperrt das Board weiteres Zählen und zeigt den Sieger.</li>
+        <li><b>Wechsel-Break / Winner-Break</b> – Der Knopf <i>Anstoß</i> in den Einstellungen schaltet um: bei <b>Wechsel-Break</b> (Standard) wechselt der Anstoß nach jedem Satz, bei <b>Winner-Break</b> stößt an, wer den Satz gewonnen hat. Im Winner-Break steht hinter <i>Next Break</i> zusätzlich „· Winner-Break“. <b>🔄 Neues Match</b> setzt wieder auf Wechsel-Break zurück.</li>
+        <li><b>Korrigieren</b> – <b>↩️ Undo</b> nimmt den letzten Schritt zurück – Punkt oder Seitenwechsel –, auch noch nach Erreichen des Ziels. Undo wirkt nur auf diesem Tablet.</li>
+        <li><b>Namen</b> – Mit <b>✏️</b> neben dem Namen änderst du ihn.</li>
+      </ul>
+
+      <h3 style="border-top:1px solid #eee;padding-top:14px;margin-top:16px;">Allgemeine Regeln (für 8-, 9- und 10-Ball)</h3>
       <ul>
         <li><b>Anstoß:</b> Der Spielball liegt frei im <b>Kopffeld</b>. Beim Break muss eine Kugel fallen oder mindestens 4 Objektkugeln eine Bande berühren.</li>
         <li><b>Korrekter Stoß:</b> Nach dem Kontakt muss mindestens eine Kugel eine Bande berühren oder versenkt werden.</li>
@@ -430,21 +447,12 @@
     }
   }
 
-  function updateBreakModeBtn() {
-    const btn = document.getElementById("breakModeBtn");
-    if (!btn) return;
-    const winner = (state.breakMode || "alternating") === "winner";
-    btn.textContent = winner ? "Winner-Break" : "Wechsel-Break";
-    btn.classList.toggle("on", winner);
-  }
-
   function render() {
     document.getElementById("p1").textContent = state.player1;
     document.getElementById("p2").textContent = state.player2;
     document.getElementById("s1").textContent = state.score1;
     document.getElementById("s2").textContent = state.score2;
     updateBreakDisplay();
-    updateBreakModeBtn();
     document.getElementById("raceToVal").textContent = state.raceTo > 0 ? state.raceTo : "—";
     const over = matchOver();
     document.getElementById("confirm-panel").style.display = over ? "block" : "none";
@@ -459,11 +467,70 @@
 
   // Ausspielziel (Race to) – optional; erreicht = Spiel gewonnen
   function matchOver() { const r = state.raceTo || 0; return r > 0 && (state.score1 >= r || state.score2 >= r); }
+  /* Einstellungen (Ausspielziel + Anstoss-Modus) in EINEM Dialog. Eigener Dialog statt
+     promptModal, weil dort kein Pool-spezifischer Schalter hingehoert; Aufbau und
+     Klassen sind dieselben. Beides wird erst mit OK uebernommen. */
+  const BREAK_TEXTE = {
+    alternating: { label: "Wechsel-Break", hinweis: "Der Anstoß wechselt nach jedem Satz." },
+    winner:      { label: "Winner-Break",  hinweis: "Wer den Satz gewinnt, stößt auch den nächsten an." }
+  };
+
+  function settingsModal(raceTo, breakMode) {
+    return new Promise((resolve) => {
+      const ov = document.createElement("div");
+      ov.className = "app-dlg-overlay";
+      ov.innerHTML =
+        '<div class="app-dlg-box" role="dialog" aria-modal="true">' +
+          '<div class="app-dlg-title">🎱 8/9/10-Ball Scoreboard</div>' +
+          '<div class="app-dlg-msg">Race to (Sätze; leer = kein Ziel):</div>' +
+          '<input type="text" class="app-dlg-input" inputmode="numeric" maxlength="3">' +
+          '<div class="set-dlg-label">Anstoß:</div>' +
+          '<button type="button" class="set-dlg-break"></button>' +
+          '<div class="set-dlg-hint"></div>' +
+          '<div class="app-dlg-actions">' +
+            '<button type="button" class="app-dlg-cancel">Abbrechen</button>' +
+            '<button type="button" class="app-dlg-ok">OK</button>' +
+          '</div>' +
+        '</div>';
+      document.body.appendChild(ov);
+
+      const inp = ov.querySelector(".app-dlg-input");
+      inp.value = raceTo > 0 ? String(raceTo) : "";
+      inp.addEventListener("input", () => { inp.value = inp.value.replace(/\D/g, "").slice(0, 3); });
+
+      let modus = (breakMode === "winner") ? "winner" : "alternating";
+      const bBtn = ov.querySelector(".set-dlg-break");
+      const bHint = ov.querySelector(".set-dlg-hint");
+      const zeige = () => {
+        bBtn.textContent = BREAK_TEXTE[modus].label;
+        bHint.textContent = BREAK_TEXTE[modus].hinweis;
+        bBtn.classList.toggle("on", modus === "winner");
+      };
+      bBtn.addEventListener("click", () => {
+        modus = (modus === "winner") ? "alternating" : "winner";
+        zeige();
+      });
+      zeige();
+
+      const fertig = (wert) => { ov.remove(); document.removeEventListener("keydown", onKey); resolve(wert); };
+      function onKey(e) { if (e.key === "Escape") fertig(null); }
+      ov.querySelector(".app-dlg-ok").addEventListener("click", () => fertig({ raceTo: inp.value, breakMode: modus }));
+      ov.querySelector(".app-dlg-cancel").addEventListener("click", () => fertig(null));
+      inp.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); fertig({ raceTo: inp.value, breakMode: modus }); }
+      });
+      ov.addEventListener("click", (e) => { if (e.target === ov) fertig(null); });
+      document.addEventListener("keydown", onKey);
+      setTimeout(() => { inp.focus(); inp.select(); }, 30);
+    });
+  }
+
   async function setRaceTo() {
-    const v = await promptModal("Race to (Sätze; leer = kein Ziel):", state.raceTo || '', { maxLength: 3, numeric: true });
-    if (v === null) return;
-    const n = parseInt(v, 10);
+    const erg = await settingsModal(state.raceTo || 0, state.breakMode || "alternating");
+    if (erg === null) return;                       // Abbrechen aendert nichts
+    const n = parseInt(erg.raceTo, 10);
     state.raceTo = (!isNaN(n) && n > 0) ? n : 0;
+    state.breakMode = erg.breakMode;
     save(); render();
   }
 
@@ -531,12 +598,6 @@
   });
   document.getElementById("helpCloseBtn").addEventListener("click", () => {
     document.getElementById("help-overlay").style.display = "none";
-  });
-
-  // Break-Modus umschalten (Wechsel- <-> Winner-Break)
-  document.getElementById("breakModeBtn").addEventListener("click", () => {
-    state.breakMode = ((state.breakMode || "alternating") === "winner") ? "alternating" : "winner";
-    save(); render();
   });
 
   function updateClock() {

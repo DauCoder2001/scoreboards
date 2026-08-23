@@ -573,8 +573,12 @@
     state.nextBreak = 1;
     state.breakMode = "alternating";   // Break-Modus faellt bei neuem Match auf Standard zurueck
     if (await confirmModal("Spieler neu eingeben?")) {
-      state.player1 = (await promptModal("Name Spieler Rot:", state.player1) || state.player1).trim() || state.player1;
-      state.player2 = (await promptModal("Name Spieler Blau:", state.player2) || state.player2).trim() || state.player2;
+      // Leeres Feld und Abbrechen sauber trennen: promptModal liefert bei Abbruch null,
+      // bei OK immer einen String. Geleertes Feld -> Vorgabe statt alter Name.
+      const n1 = await promptModal("Name Spieler Rot:", state.player1);
+      if (n1 !== null) state.player1 = n1.trim() || "Spieler 1";
+      const n2 = await promptModal("Name Spieler Blau:", state.player2);
+      if (n2 !== null) state.player2 = n2.trim() || "Spieler 2";
     }
     save(); render();
   }

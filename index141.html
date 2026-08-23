@@ -128,32 +128,40 @@
     padding: 1vmin 4vmin;
     position: relative;
     z-index: 5;
-    flex: 0 0 auto;
+    flex: 1 1 auto;          /* uebernimmt die Rolle des frueheren #scores */
+    min-height: 20vh;
   }
 
-  .player-box {
-    flex: 1;
-    text-align: center;
+  /* Haelfte je Spieler; zentriert die (inhaltsbreite) Hervorhebung */
+  .player-box { flex: 1; display: flex; justify-content: center; min-width: 0; }
+
+  /* Gruene Aktiv-Flaeche: umschliesst Name, Stift, Statistik und Zaehler.
+     width:fit-content -> so breit wie der breiteste Teil, waechst mit langen Namen. */
+  .player-hl {
     display: flex;
     flex-direction: column;
     align-items: center;
+    width: fit-content;
+    max-width: 100%;
+    border-radius: 1.5vmin;
+    padding: 0.6vmin 1.5vmin 1vmin;
     font-size: 6vmin;
     font-weight: bold;
-    min-width: 0;
   }
 
   .player-left { color: var(--red); }
   .player-right { color: var(--blue); }
 
   /* Name: konstantes Padding, damit die Aktiv-Markierung die Hoehe nicht aendert */
-  #p1, #p2 { border-radius: 1vmin; padding: 0.3vmin 1vmin; }
-  .active { background: var(--active); }
+  #p1, #p2 { padding: 0.3vmin 1vmin; }        /* Hoehe konstant halten */
+  .player-hl.active { background: var(--active); }
 
   /* Name + Stift in einer Zeile */
   .name-row { display: flex; align-items: center; justify-content: center; gap: 1.5vmin; }
 
   /* Mittelspalte mit Seitenwechsel (auf Hoehe der Namen, ~20% kleiner) */
-  .player-mid { flex: 0 0 auto; align-self: flex-start; padding-top: 1.2vmin; }
+  .player-mid { flex: 0 0 auto; align-self: stretch; display: flex; flex-direction: column;
+    align-items: center; padding-top: 1.2vmin; }
   #swapBtn { font-size: 2.4vmin; padding: 0.8vmin 1.6vmin; margin: 0; white-space: nowrap; }
 
   .edit-btn {
@@ -175,17 +183,6 @@
     white-space: nowrap;
   }
 
-  /* Scores */
-  #scores {
-    flex: 1 1 auto;
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: center;
-    min-height: 20vh;
-    position: relative;
-    z-index: 1;
-    transform: translateY(-20px);   /* Score-Zeile (Zahlen + Doppelpunkt) 20px hoeher */
-  }
 
   .score {
     display: flex;
@@ -208,6 +205,7 @@
     font-weight: bold;
     line-height: 1;
     padding: 0 1vmin;
+    margin-top: 20.3vmin;   /* auf Ziffernmitte; alles vmin-basiert, traegt ueber Bildschirmgroessen */
   }
 
   /* Kugelbereich */
@@ -411,6 +409,7 @@
   #log-legend .pz-f { color: #cc0000; }
   #log-legend .pz-f3 { color: #a30000; }
   #log-legend .pz-hs { background: #fff6cc; padding: 1px 6px; border-radius: 4px; }
+  #log-legend #log-time { margin-left: auto; font-weight: bold; color: #1f3b73; }
 
   /* Hilfe-Overlay */
   #help-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55);
@@ -559,43 +558,45 @@
 
   <div id="players">
     <div class="player-box">
-      <div class="name-row">
-        <div id="p1" class="player-left">Spieler 1</div>
-        <button class="edit-btn" id="editP1Btn" type="button" onclick="changeName(1)">✏️</button>
-      </div>
-      <div class="stats">
-        Run: <span id="run1">0</span> |
-        HS: <span id="high1">0</span><br>
-        Ø: <span id="avg1">0.0</span> |
-        Aufn.: <span id="inn1">0</span>
-        <div class="fouls" id="fouls1"></div>
+      <div class="player-hl" id="hl1">
+        <div class="name-row">
+          <div id="p1" class="player-left">Spieler 1</div>
+          <button class="edit-btn" id="editP1Btn" type="button" onclick="changeName(1)">✏️</button>
+        </div>
+        <div class="stats">
+          Run: <span id="run1">0</span> |
+          HS: <span id="high1">0</span><br>
+          Ø: <span id="avg1">0.0</span> |
+          Aufn.: <span id="inn1">0</span>
+          <div class="fouls" id="fouls1"></div>
+        </div>
+        <div id="s1" class="score">0</div>
       </div>
     </div>
 
     <div class="player-mid">
       <button id="swapBtn" type="button" onclick="swap()">↔ Seitenwechsel</button>
+      <div id="colon">:</div>
     </div>
 
     <div class="player-box">
-      <div class="name-row">
-        <div id="p2" class="player-right">Spieler 2</div>
-        <button class="edit-btn" id="editP2Btn" type="button" onclick="changeName(2)">✏️</button>
-      </div>
-      <div class="stats">
-        Run: <span id="run2">0</span> |
-        HS: <span id="high2">0</span><br>
-        Ø: <span id="avg2">0.0</span> |
-        Aufn.: <span id="inn2">0</span>
-        <div class="fouls" id="fouls2"></div>
+      <div class="player-hl" id="hl2">
+        <div class="name-row">
+          <div id="p2" class="player-right">Spieler 2</div>
+          <button class="edit-btn" id="editP2Btn" type="button" onclick="changeName(2)">✏️</button>
+        </div>
+        <div class="stats">
+          Run: <span id="run2">0</span> |
+          HS: <span id="high2">0</span><br>
+          Ø: <span id="avg2">0.0</span> |
+          Aufn.: <span id="inn2">0</span>
+          <div class="fouls" id="fouls2"></div>
+        </div>
+        <div id="s2" class="score">0</div>
       </div>
     </div>
   </div>
 
-  <div id="scores">
-    <div id="s1" class="score">0</div>
-    <div id="colon">:</div>
-    <div id="s2" class="score">0</div>
-  </div>
 
   <div id="status"></div>
 
@@ -640,6 +641,7 @@
       <span><b style="color:#1133cc;">V</b> Verschossen</span>
       <span><b>HS</b> = Höchstserie <span class="pz-hs">(gelb markiert)</span></span>
       <span><b style="color:#1f3b73;">▶</b> laufende Aufnahme</span>
+      <span id="log-time"></span>
     </div>
   </div>
 </div>
@@ -838,6 +840,7 @@
     const inningsReached = state.targetInn > 0 && state.inn1 >= state.targetInn && state.inn2 >= state.targetInn;
     if (!pointsReached && !inningsReached) return;   // weder Punkteziel noch Aufnahmen-Limit erreicht
     state.locked = true;
+    state.endedAt = Date.now();   // Spielzeit einfrieren
     // Sieger = mehr Punkte; bei Erreichen des Aufnahmen-Limits ist auch Unentschieden moeglich.
     if (state.s1 > state.s2) {
       state.winnerText = "Spiel beendet – Gewinner: " + state.player1;
@@ -899,7 +902,7 @@
     const gained = state.ballsLeft - n;
     if (gained <= 0) return;               // oberste Kugel angeklickt = nichts versenkt
     pushHistory();
-    if (!state.startedAt) state.startedAt = Date.now();
+    markStart();
     if (state.phase === "break") state.phase = "play";     // gefallene Kugel beendet die Eroeffnungsphase
     if (state.turn === 1) { state.s1 += gained; state.run1 += gained; state.consec1 = 0; }
     else                  { state.s2 += gained; state.run2 += gained; state.consec2 = 0; }
@@ -919,6 +922,7 @@
   function missTurn() {
     if (state.locked) return;
     pushHistory();
+    markStart();
     const p = state.turn;
     const run = (p === 1 ? state.run1 : state.run2);
     logEntry(p, run, 0, "", "run");
@@ -934,6 +938,7 @@
   async function foul() {
     if (state.locked) return;
     pushHistory();
+    markStart();
     const p = state.turn;
     const run = (p === 1 ? state.run1 : state.run2);
     const hadLegalBall = run > 0;
@@ -971,6 +976,7 @@
   function safety() {
     if (state.locked) return;
     pushHistory();
+    markStart();
     const p = state.turn;
     const run = (p === 1 ? state.run1 : state.run2);
     logEntry(p, run, 0, "", "safety");
@@ -986,6 +992,7 @@
   async function breakFoul() {
     if (state.locked) return;
     pushHistory();
+    markStart();
     const p = state.turn;
     respotRun(p);
     if (p === 1) state.s1 -= 2; else state.s2 -= 2;
@@ -1055,11 +1062,16 @@
     state.locked = false;
     state.winnerText = "";
     state.startedAt = null;
+    state.endedAt = null;
     history = [];
 
     if (await confirmModal("Spielernamen ändern?")) {
-      state.player1 = (await promptModal("Name Spieler 1 (Rot):", state.player1) || state.player1).trim() || state.player1;
-      state.player2 = (await promptModal("Name Spieler 2 (Blau):", state.player2) || state.player2).trim() || state.player2;
+      // Leeres Feld und Abbrechen sauber trennen: promptModal liefert bei Abbruch null,
+      // bei OK immer einen String. Geleertes Feld -> Vorgabe statt alter Name.
+      const n1 = await promptModal("Name Spieler 1 (Rot):", state.player1);
+      if (n1 !== null) state.player1 = n1.trim() || "Spieler 1";
+      const n2 = await promptModal("Name Spieler 2 (Blau):", state.player2);
+      if (n2 !== null) state.player2 = n2.trim() || "Spieler 2";
     }
 
     save();
@@ -1135,12 +1147,10 @@
     fe1.textContent = f1.text; fe1.classList.toggle("warn", f1.warn);
     fe2.textContent = f2.text; fe2.classList.toggle("warn", f2.warn);
 
-    const p1 = document.getElementById("p1");
-    const p2 = document.getElementById("p2");
-    p1.classList.remove("active");
-    p2.classList.remove("active");
-    if (state.turn === 1) p1.classList.add("active");
-    else p2.classList.add("active");
+    const hl1 = document.getElementById("hl1");
+    const hl2 = document.getElementById("hl2");
+    hl1.classList.toggle("active", state.turn === 1);
+    hl2.classList.toggle("active", state.turn === 2);
 
     const inBreak = !state.locked && state.phase === "break";
     const activeName = (state.turn === 1 ? state.player1 : state.player2);
@@ -1169,6 +1179,7 @@
   }
 
   function updateClock() {
+    if (logOpen) zeigeSpielzeit();   // sonst stuende die Zeit ohne Zug still
     document.getElementById("clock").textContent =
       new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
   }
@@ -1191,6 +1202,22 @@
       '</div>';
   }
 
+  // Spielzeit: startet mit der ERSTEN Aktion (auch Foul, Sicherheit, Verschossen,
+  // Eroeffnungsfoul) - nicht erst beim ersten versenkten Ball. Aufruf jeweils nach
+  // pushHistory(), damit Undo den Zustand davor sauber wiederherstellt.
+  function markStart() { if (!state.startedAt) state.startedAt = Date.now(); }
+
+  // Dauer als "1:23 h". Nach Spielende friert sie ueber state.endedAt ein.
+  function spielzeitText() {
+    if (!state.startedAt) return "Spielzeit —";
+    const min = Math.max(0, Math.floor(((state.endedAt || Date.now()) - state.startedAt) / 60000));
+    return "Spielzeit " + Math.floor(min / 60) + ":" + String(min % 60).padStart(2, "0") + " h";
+  }
+
+  function zeigeSpielzeit() {
+    const el = document.getElementById("log-time");
+    if (el) el.textContent = spielzeitText();
+  }
   function buildProtocol() {
     const sum = document.getElementById("log-summary");
     sum.innerHTML =
@@ -1277,6 +1304,8 @@
           '<th class="pz-bl">F</th><th>Pkt.</th><th>Gesamt</th>' +
         '</tr>' +
       '</thead><tbody>' + rows + '</tbody>';
+
+    zeigeSpielzeit();
   }
 
   function openLog() {

@@ -625,6 +625,7 @@
       <div id="log-title">📋 Protokoll</div>
       <div id="log-head-actions">
         <button id="log-print" type="button">🖨 Drucken</button>
+        <button id="log-share" type="button">📤 Senden</button>
         <button id="log-close" type="button" aria-label="Schließen">✕</button>
       </div>
     </div>
@@ -657,11 +658,19 @@
       <ul>
         <li><b>➜ Verschossen</b> – regelgerechter Fehlversuch ohne Strafe; der Gegner kommt an die Aufnahme.</li>
         <li><b>⚠ Foul −1</b> – Standardfoul: −1 Punkt, Wechsel. <b>Drei Fouls in Folge = zusätzlich −15.</b> Ab dem 2. Foul erscheint eine Warnung.</li>
-        <li><b>🛡 Sicherheit</b> – bewusst kein Treffer: 0 Punkte, Wechsel; versenkte Kugeln werden wieder aufgesetzt.</li>
+        <li><b>🛡 Sicherheit</b> – bewusst kein Treffer: 0 Punkte, Wechsel; versenkte Kugeln werden wieder aufgesetzt. Ein regelgerechter Sicherheitsstoß <b>bricht die Foulserie</b> – der Zähler geht auf 0.</li>
         <li><b>✖ Eröffnungsfoul −2</b> – nur beim Anstoß: −2 Punkte; danach übernimmt der Gegner oder lässt wiederholen.</li>
       </ul>
+
+      <h3>Beim Anstoß: welcher Foul-Knopf?</h3>
+      <p>Während des Eröffnungsstoßes stehen <b>beide</b> Foul-Knöpfe zur Wahl – sie bedeuten Verschiedenes:</p>
+      <ul>
+        <li><b>✖ Eröffnungsfoul −2</b> – der <b>Anstoß selbst war ungültig</b>: keine Kugel versenkt <i>und</i> nicht genug Objektkugeln an eine Bande gelaufen. <b>−2 Punkte</b>, und es <b>zählt nicht</b> für die Drei-Foul-Regel – der Foulzähler bleibt stehen. Der Gegner übernimmt den Tisch oder lässt wiederholen; beim Wiederholen stößt <b>derselbe</b> Spieler erneut an.</li>
+        <li><b>⚠ Foul −1</b> – der <b>Anstoß war gültig</b>, dabei ist aber ein normales Foul passiert, typischerweise die <b>gefallene Weiße</b>. Nur <b>−1 Punkt</b>, dafür <b>zählt es</b> als erstes Foul der Serie. Der Gegner übernimmt den Tisch mit <b>Ball in Hand aus dem Kopffeld</b>.</li>
+      </ul>
+      <p style="font-size:13px;color:#666;">Merke: Der härter bestrafte ungültige Anstoß schützt vor dem Foulzähler – der eigentlich gute Anstoß mit gefallener Weißer ist der klassische Beginn einer Foulserie.</p>
       <h3>Anstoß &amp; Seiten</h3>
-      <p>Der <b>Eröffnungsstoß</b> liegt immer beim <b>roten (linken)</b> Spieler. Mit <b>↔ Seitenwechsel</b> legst du fest, wer links steht – und damit anstößt.</p>
+      <p>Der <b>Eröffnungsstoß</b> zu Spielbeginn liegt immer beim <b>roten (linken)</b> Spieler. Mit <b>↔ Seitenwechsel</b> legst du fest, wer links steht – und damit anstößt. Nach der <b>Drei-Foul-Strafe</b> stößt dagegen der Spieler an, der die drei Fouls begangen hat.</p>
       <h3>Gut zu wissen</h3>
       <ul>
         <li>Sind <b>14 Kugeln</b> versenkt, wird automatisch wieder aufgebaut – du spielst weiter.</li>
@@ -924,7 +933,6 @@
   // Standardfoul (4.9): -1, Aufnahmewechsel; Drei-Foul-Regel (4.11) beachtet.
   async function foul() {
     if (state.locked) return;
-    if (state.phase === "break") return breakFoul();   // am Break ist jedes Foul ein Eroeffnungsfoul
     pushHistory();
     const p = state.turn;
     const run = (p === 1 ? state.run1 : state.run2);
@@ -935,18 +943,19 @@
     else         { state.consec2 = hadLegalBall ? 1 : state.consec2 + 1; consec = state.consec2; }
 
     if (consec >= 3) {
-      // 4.11: zusaetzlich -15, Fouls geloescht, alle 15 neu, Eroeffnungsstoss wieder durch Rot.
+      // 4.11: zusaetzlich -15, Fouls geloescht, alle 15 neu, Verursacher stoesst neu an.
       if (p === 1) { state.s1 -= 15; state.consec1 = 0; } else { state.s2 -= 15; state.consec2 = 0; }
       logEntry(p, run, 16, "3F", "foul3");
       rebuildFull();
       flushRebuilds();
       if (p === 1) state.inn1++; else state.inn2++;
       state.run1 = 0; state.run2 = 0; state.rackPts = [];
-      state.turn = 1; state.phase = "break"; state.breaker = 1;
+      state.turn = p; state.phase = "break"; state.breaker = p;
     } else {
       logEntry(p, run, 1, consec === 1 ? "/" : "//", "foul");
       flushRebuilds();
       nextTurnInternal();
+      state.phase = "play";   // Gegner uebernimmt den Tisch, kein neuer Anstoss
     }
     save();
     render();
@@ -954,14 +963,18 @@
 
   // Sicherheit (4.5/4.6): vor der Sicherheit legal versenkte Baelle zaehlen normal; die
   // Sicherheit beendet nur die Aufnahme (kein zusaetzlicher Punkt) und wechselt die Aufnahme.
-  // Foulzaehler bleibt unveraendert (Sicherheit ist kein Foul; gelochte Baelle haben ihn ggf.
-  // schon in hit() geloescht).
+  // Die angesagte Sicherheit ist ein REGELGERECHTER Stoss und bricht daher die Foulserie
+  // (4.11 zaehlt nur Fouls "ohne dazwischenliegenden regelgerechten Stoss") - genau wie
+  // missTurn(). Wer diesen Knopf drueckt, sagt dem Board, dass der Stoss gueltig war;
+  // ein ungueltiger Versuch waere "Foul". Entscheidend fuer die reine Sicherheit OHNE
+  // versenkte Kugel - sonst hat hit() den Zaehler ohnehin schon geloescht.
   function safety() {
     if (state.locked) return;
     pushHistory();
     const p = state.turn;
     const run = (p === 1 ? state.run1 : state.run2);
     logEntry(p, run, 0, "", "safety");
+    if (p === 1) state.consec1 = 0; else state.consec2 = 0;   // regelgerechter Stoss bricht die Foulserie (4.11)
     flushRebuilds();
     nextTurnInternal();
     state.phase = "play";
@@ -987,8 +1000,8 @@
       flushRebuilds();
       if (p === 1) state.inn1++; else state.inn2++;
       state.run1 = 0; state.run2 = 0; state.rackPts = [];
-      // Eroeffnungsstoss wird wiederholt – immer durch den roten (linken) Spieler
-      state.turn = 1; state.breaker = 1; state.phase = "break";
+      // Wiederholung durch denselben Spieler, der das Eroeffnungsfoul begangen hat
+      state.turn = p; state.breaker = p; state.phase = "break";
     }
     save();
     render();
@@ -1144,7 +1157,7 @@
     }
     status.classList.toggle("game-over", !!state.locked);
 
-    document.getElementById("foulBtn").style.display = inBreak ? "none" : "inline-block";
+    document.getElementById("foulBtn").style.display = "inline-block";   // auch beim Anstoss: gueltiger Anstoss + Foul = -1
     document.getElementById("breakFoulBtn").style.display = inBreak ? "inline-block" : "none";
 
     ["editP1Btn","editP2Btn","targetBtn","missBtn","foulBtn","safetyBtn","breakFoulBtn","swapBtn"]
@@ -1282,6 +1295,7 @@
     if (e.target.id === "log-overlay") closeLog();
   });
 
+
   /* Hilfe-Overlay */
   function openHelp() { document.getElementById("help-overlay").style.display = "flex"; }
   function closeHelp() { document.getElementById("help-overlay").style.display = "none"; }
@@ -1311,6 +1325,139 @@
   render();
   setInterval(updateClock, 1000);
   updateClock();
+</script>
+
+<script>
+  /* Teilen/Mail steht BEWUSST in einem eigenen Skriptblock. Ein Syntaxfehler
+     schlaegt schon beim Parsen zu, da greift kein try/catch - der ganze Block
+     laeuft dann nie. In einem eigenen Block kann so ein Fehler das Board-Skript
+     nicht mehr erreichen. Zugriff auf "state" aus dem Hauptblock bleibt moeglich
+     (top-level let/const teilen sich die globale Lexik ueber Skriptbloecke). */
+  /* ===========================
+     Protokoll teilen / per Mail senden
+     Gleiche Logik wie js/share-protocol.js, hier inline damit das Bundle
+     self-contained bleibt. Der Inhalt kommt aus dem bereits gerenderten
+     Protokoll, es gibt also keinen zweiten Renderpfad.
+
+     Wird bewusst NICHT hier ausgefuehrt, sondern erst nach load()/render()
+     am Ende des Blocks - und dort gekapselt. Sonst wuerde ein Fehler in
+     diesem Zusatz das ganze Board am Starten hindern.
+     =========================== */
+  function setupShareBtn() {
+    const btn = document.getElementById("log-share");
+    if (!btn) return;
+
+    const SELEKTOR = /(^|[\s,>])(#log-|\.pz-|\.ls-)/;
+    const BASIS_CSS = `
+      body { font-family: Arial, sans-serif; background: #fff; color: #222; margin: 16px; }
+      h1 { font-size: 18px; margin: 0 0 2px; }
+      .kopf-datum { font-size: 12px; color: #666; margin: 0 0 14px; }
+      table { width: 100%; border-collapse: collapse; table-layout: fixed;
+              font-size: 14px; text-align: center; }
+      th, td { padding: 5px 2px; border-bottom: 1px solid #eee; }
+      thead th { background: #f4f4f4; }
+      .fuss { margin-top: 14px; font-size: 11px; color: #888; }
+      @page { size: A4 portrait; margin: 12mm; }
+    `;
+
+    function seitenCss() {
+      const teile = [];
+      for (const sheet of Array.from(document.styleSheets)) {
+        let regeln;
+        try { regeln = sheet.cssRules; } catch (e) { continue; }
+        if (!regeln) continue;
+        for (const r of Array.from(regeln)) {
+          if (r.selectorText && SELEKTOR.test(r.selectorText)) teile.push(r.cssText);
+        }
+      }
+      return teile.join("\n");
+    }
+
+    // Kopfzeile Feld fuer Feld - textContent des ganzen Blocks wuerde Name und
+    // Punktzahl aneinanderkleben ("Spieler 17").
+    function summaryText() {
+      const sum = document.getElementById("log-summary");
+      if (!sum) return "";
+      const zeilen = [];
+      sum.querySelectorAll(".ls-p").forEach(p => {
+        const feld = k => { const e = p.querySelector(k); return e ? e.textContent.trim() : ""; };
+        zeilen.push([feld(".ls-name"), feld(".ls-score"), feld(".ls-stats")].filter(Boolean).join("  "));
+      });
+      const ziel = sum.querySelector(".ls-target");
+      if (ziel) {
+        const z = Array.from(ziel.children).map(e => e.textContent.trim()).filter(Boolean).join(" · ");
+        if (z) zeilen.push(z);
+      }
+      if (!zeilen.length) return sum.textContent.replace(/\s+/g, " ").trim();
+      return zeilen.filter(Boolean).join("\n");
+    }
+
+    // Von den Kopfzeilen nur die untere - die obere hat colspan und wuerde die
+    // Spaltenbreiten verziehen.
+    function alsText() {
+      const zeilen = [];
+      const kopf = summaryText();
+      if (kopf) zeilen.push(kopf, "");
+      const tab = document.getElementById("log-table");
+      if (tab) {
+        const kopfZeile = tab.querySelector("thead tr:last-child");
+        const trs = (kopfZeile ? [kopfZeile] : []).concat(Array.from(tab.querySelectorAll("tbody tr")));
+        const alle = trs.map(tr => Array.from(tr.cells).map(c => c.textContent.trim()));
+        const breite = [];
+        alle.forEach(z => z.forEach((c, i) => { breite[i] = Math.max(breite[i] || 0, c.length); }));
+        alle.forEach(z => zeilen.push(z.map((c, i) => c.padEnd(breite[i])).join("  ").trimEnd()));
+      }
+      return zeilen.join("\n");
+    }
+
+    const dateiSicher = s => String(s || "")
+      .replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue")
+      .replace(/Ä/g, "Ae").replace(/Ö/g, "Oe").replace(/Ü/g, "Ue").replace(/ß/g, "ss")
+      .replace(/[^A-Za-z0-9._-]+/g, "-")
+      .replace(/-+/g, "-").replace(/_+/g, "_")     // sonst doppelter Unterstrich bei leeren Namen
+      .replace(/^[-_]+|[-_]+$/g, "");
+
+    btn.addEventListener("click", () => {
+      const titel = "14.1 Protokoll - " + state.player1 + " vs. " + state.player2;
+      const datum = new Date();
+      const name = dateiSicher("14.1-Protokoll_" + state.player1 + "-vs-" + state.player2)
+                 + "_" + datum.toISOString().slice(0, 10) + ".html";
+      const tab = document.getElementById("log-table");
+      const html =
+        '<!doctype html><html lang="de"><head><meta charset="utf-8">' +
+        '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+        "<title>" + titel + "</title><style>" + seitenCss() + BASIS_CSS + "</style></head><body>" +
+        "<h1>" + titel + "</h1>" +
+        '<p class="kopf-datum">' + datum.toLocaleString("de-DE") + "</p>" +
+        '<div id="log-summary">' + document.getElementById("log-summary").innerHTML + "</div>" +
+        (tab ? tab.outerHTML : "") +
+        '<div id="log-legend">' + document.getElementById("log-legend").innerHTML + "</div>" +
+        '<p class="fuss">Erstellt mit dem Billard-Turnier-Scoreboard.</p>' +
+        "</body></html>";
+
+      let datei = null;
+      try { datei = new File([html], name, { type: "text/html" }); } catch (e) { /* alte Browser */ }
+
+      if (datei && navigator.canShare && navigator.canShare({ files: [datei] })) {
+        const p = navigator.share({ files: [datei], title: titel });
+        if (p && typeof p.catch === "function") p.catch(() => {});   // Abbruch ist kein Fehler
+        return;
+      }
+
+      const paarZeile = state.player1 + " vs. " + state.player2 + "\n\n";
+      let rumpf = paarZeile + alsText();
+      if (encodeURIComponent(rumpf).length > 1500) {
+        rumpf = paarZeile + summaryText() + "\n\n"
+              + 'Vollstaendiges Protokoll bitte ueber "Drucken" als PDF sichern - '
+              + "es ist fuer den Mailtext zu lang.";
+      }
+      window.location.href = "mailto:?subject=" + encodeURIComponent(titel) +
+                             "&body=" + encodeURIComponent(rumpf);
+    });
+  }
+
+  try { setupShareBtn(); }
+  catch (e) { console.error("Teilen-Knopf nicht verfuegbar:", e); }
 </script>
 
 <script>

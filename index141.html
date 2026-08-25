@@ -163,6 +163,7 @@
   .player-mid { flex: 0 0 auto; align-self: stretch; display: flex; flex-direction: column;
     align-items: center; padding-top: 1.2vmin; }
   #swapBtn { font-size: 2.4vmin; padding: 0.8vmin 1.6vmin; margin: 0; white-space: nowrap; }
+  #swapBtn:disabled { opacity: var(--disabled-opacity); cursor: default; }
 
   .edit-btn {
     font-size: 2.5vmin;
@@ -672,7 +673,8 @@
       </ul>
       <p style="font-size:13px;color:#666;">Merke: Der härter bestrafte ungültige Anstoß schützt vor dem Foulzähler – der eigentlich gute Anstoß mit gefallener Weißer ist der klassische Beginn einer Foulserie.</p>
       <h3>Anstoß &amp; Seiten</h3>
-      <p>Der <b>Eröffnungsstoß</b> zu Spielbeginn liegt immer beim <b>roten (linken)</b> Spieler. Mit <b>↔ Seitenwechsel</b> legst du fest, wer links steht – und damit anstößt. Nach der <b>Drei-Foul-Strafe</b> stößt dagegen der Spieler an, der die drei Fouls begangen hat.</p>
+      <p>Der <b>Eröffnungsstoß</b> zu Spielbeginn liegt immer beim <b>roten (linken)</b> Spieler. Mit <b>↔ Seitenwechsel</b> legst du <b>vor dem ersten Stoß</b> fest, wer links steht – und damit anstößt.</p>
+      <p>Sobald die Partie läuft, ist der Knopf <b>gesperrt</b>: Ein Seitenwechsel wäre dann nur noch eine Spiegelung der Anzeige. Entsteht später wieder eine Anstoßphase – nach der <b>Drei-Foul-Strafe</b> oder bei einem <b>wiederholten Eröffnungsstoß</b> – ist er erneut bedienbar, tauscht dann aber nur die Seiten: Der Anstoß <b>bleibt bei dem Spieler, dem er zusteht</b>.</p>
       <h3>Gut zu wissen</h3>
       <ul>
         <li>Sind <b>14 Kugeln</b> versenkt, wird automatisch wieder aufgebaut – du spielst weiter.</li>
@@ -839,6 +841,23 @@
     // Aufnahmen-Limit: BEIDE Spieler spielen ihre Aufnahmen zu Ende (nicht wer die Zahl zuerst erreicht).
     const inningsReached = state.targetInn > 0 && state.inn1 >= state.targetInn && state.inn2 >= state.targetInn;
     if (!pointsReached && !inningsReached) return;   // weder Punkteziel noch Aufnahmen-Limit erreicht
+
+    // Beim Punkteziel ist die entscheidende Aufnahme noch OFFEN und wuerde spurlos
+    // verschwinden: buildProtocol() zeigt die Live-Zeile nur solange nicht gesperrt ist.
+    // Sie wird daher hier abgeschlossen - damit taucht sie im Protokoll auf und zaehlt
+    // bei "Aufn." und der Hoechstserie mit (beides macht logEntry()).
+    // Punkte steigen nur in hit(), pointsReached wird also genau dann neu wahr, wenn eine
+    // Aufnahme offen ist. inningsReached wird dagegen erst nach einem inn++ wahr, die
+    // Aufnahme ist dort bereits geschlossen - eine Zeile mit 0 Punkten waere falsch.
+    if (pointsReached) {
+      const pEnd = state.turn;
+      const runEnd = (pEnd === 1 ? state.run1 : state.run2);
+      logEntry(pEnd, runEnd, 0, "", "end");            // leere F-Spalte
+      flushRebuilds();
+      if (pEnd === 1) state.inn1++; else state.inn2++; // kein nextTurnInternal: kein Zugwechsel
+      state.run1 = 0; state.run2 = 0; state.rackPts = [];
+    }
+
     state.locked = true;
     state.endedAt = Date.now();   // Spielzeit einfrieren
     // Sieger = mehr Punkte; bei Erreichen des Aufnahmen-Limits ist auch Unentschieden moeglich.
@@ -1080,6 +1099,7 @@
 
   function swap() {
     if (state.locked) return;
+    if (state.phase !== "break") return;   // nur in der Anstossphase; Knopf ist sonst gesperrt
     pushHistory();
 
     [state.player1, state.player2] = [state.player2, state.player1];
@@ -1088,11 +1108,14 @@
     [state.high1, state.high2] = [state.high2, state.high1];
     [state.inn1, state.inn2] = [state.inn2, state.inn1];
     [state.consec1, state.consec2] = [state.consec2, state.consec1];
-    if (state.phase === "break") {
-      // Eroeffnungsstoss liegt immer beim roten (linken) Spieler -> Seitenwechsel waehlt den Anstoss
+    if (!(state.log || []).length) {
+      // Spielbeginn (noch keine Aufnahme protokolliert): der Seitenwechsel waehlt den
+      // Anstoss aus - wer danach links steht, stoesst an.
       state.turn = 1;
       state.breaker = 1;
     } else {
+      // Regelbedingte Anstossphase (Drei-Foul-Strafe, wiederholter Eroeffnungsstoss):
+      // der Anstoss gehoert einer bestimmten Person und folgt ihr auf die andere Seite.
       state.turn = (state.turn === 1 ? 2 : 1);
       state.breaker = (state.breaker === 1 ? 2 : 1);
     }
@@ -1170,8 +1193,19 @@
     document.getElementById("foulBtn").style.display = "inline-block";   // auch beim Anstoss: gueltiger Anstoss + Foul = -1
     document.getElementById("breakFoulBtn").style.display = inBreak ? "inline-block" : "none";
 
-    ["editP1Btn","editP2Btn","targetBtn","missBtn","foulBtn","safetyBtn","breakFoulBtn","swapBtn"]
+    ["editP1Btn","editP2Btn","targetBtn","missBtn","foulBtn","safetyBtn","breakFoulBtn"]
       .forEach(id => { const el = document.getElementById(id); if (el) el.disabled = state.locked; });
+
+
+    // Seitenwechsel nur in der Anstossphase: waehrend der Partie waere er eine reine
+
+    // Spiegelung, und in einer regelbedingten Anstossphase duerfte er den Anstoss
+
+    // nicht neu verteilen.
+
+    const swapEl = document.getElementById("swapBtn");
+
+    if (swapEl) swapEl.disabled = state.locked || state.phase !== "break";
 
     drawBalls();
     if (logOpen) buildProtocol();

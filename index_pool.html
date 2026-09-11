@@ -86,10 +86,17 @@
   /* Spieler */
   #players {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 1vmin 4vmin; font-size: 6vmin; font-weight: bold;
+    padding: 1vmin 4vmin; font-size: 6.9vmin; font-weight: bold;
     position: relative; z-index: 5;
   }
-  .player-box { flex: 1; text-align: center; }
+  /* min-width: 0 ist noetig - ohne sie reisst ein langer nowrap-Name seine Haelfte auf */
+  .player-box { flex: 1; text-align: center; min-width: 0; }
+  /* Namen bleiben einzeilig; zu lange Namen verkleinert namenEinpassen(),
+     darunter (4vmin) wird abgeschnitten. */
+  /* feste Zeilenhoehe: der Stiftknopf bleibt auf gleicher Hoehe, auch wenn ein
+     Name verkleinert wurde */
+  #p1, #p2 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+             height: 8vmin; line-height: 8vmin; }
   .player-left { color: red; }
   .player-right { color: blue; }
   .edit-btn { font-size: 2.5vmin; margin-top: 1vmin; cursor: pointer; }
@@ -109,11 +116,11 @@
   }
   .score {
     display: flex; justify-content: center; align-items: center;
-    font-size: 30vmin; font-weight: bold; user-select: none; cursor: pointer;
+    font-size: 34.5vmin; font-weight: bold; user-select: none; cursor: pointer;
   }
   #s1 { color: red;  padding: 0 0 2vmin 2vmin; }
   #s2 { color: blue; padding: 0 2vmin 2vmin 0; }
-  #colon { font-size: 12vmin; font-weight: bold; display: flex; align-items: center; justify-content: center; padding-bottom: 2vmin; }
+  #colon { font-size: 13.8vmin; font-weight: bold; display: flex; align-items: center; justify-content: center; padding-bottom: 2vmin; }
 
   /* Untere Leiste (wie 14.1): Undo links, Seitenwechsel mittig */
   #bottom-bar {
@@ -447,6 +454,24 @@
     }
   }
 
+  /* Namen bleiben einzeilig: passt der Name nicht in seine Haelfte, wird nur dieser
+     Name proportional kleiner gesetzt. So bleiben beide Seiten gleich hoch und die
+     Stiftknoepfe auf einer Linie. Gemessen wird der Textknoten (Range), nicht der
+     Kasten des <div> - der ist durch .player-box immer volle Haelftenbreite. */
+  function namenEinpassen() {
+    const basis = 6.9, min = 4;                          // vmin, basis = Wert aus #players
+    const vmin = Math.min(innerWidth, innerHeight) / 100;
+    ["p1", "p2"].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.style.fontSize = basis + "vmin";                // erst zuruecksetzen, dann messen
+      const platz = el.parentElement.clientWidth - 2 * vmin;   // 2vmin Luft zur Mitte
+      const r = document.createRange(); r.selectNodeContents(el);
+      const breite = r.getBoundingClientRect().width;
+      if (breite > platz) el.style.fontSize = Math.max(min, basis * platz / breite) + "vmin";
+    });
+  }
+
   function render() {
     document.getElementById("p1").textContent = state.player1;
     document.getElementById("p2").textContent = state.player2;
@@ -454,6 +479,7 @@
     document.getElementById("s2").textContent = state.score2;
     updateBreakDisplay();
     document.getElementById("raceToVal").textContent = state.raceTo > 0 ? state.raceTo : "—";
+    namenEinpassen();
     const over = matchOver();
     document.getElementById("confirm-panel").style.display = over ? "block" : "none";
     if (over) {
@@ -461,6 +487,8 @@
       document.getElementById("confirm-text").textContent = `🏁 ${w} gewinnt ${state.score1}:${state.score2}`;
     }
   }
+
+  window.addEventListener("resize", namenEinpassen);   // Drehung und Vollbild
 
   // Anstossrecht wechselt nach jedem gewerteten Punkt (wie im Online-Board).
   function toggleBreak() { state.nextBreak = (state.nextBreak === 1 ? 2 : 1); }

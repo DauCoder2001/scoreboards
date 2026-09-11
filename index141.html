@@ -785,6 +785,7 @@
         <li><b>HS</b> – <b>Höchstserie</b>: das beste Ergebnis einer <b>einzelnen</b> Aufnahme im laufenden Match. Foulpunkte derselben Aufnahme werden vorher abgezogen – 10 Bälle und danach ein Foul zählen als <b>9</b>. Im <b>📋 Protokoll</b> ist die HS gelb markiert.</li>
         <li><b>Aufn.</b> – Zahl der <b>beendeten</b> Aufnahmen. Die laufende zählt erst mit, wenn sie durch <b>➜ Verschossen</b>, <b>⚠ Foul</b> oder <b>🛡 Sicherheit</b> endet.</li>
         <li><b>Ø</b> – <b>Punkte ÷ beendete Aufnahmen</b>, auf eine Nachkommastelle gerundet. Die Punkte wachsen mit jeder Kugel, die Aufnahmen springen erst beim Wechsel – der Ø <b>steigt</b> deshalb während einer Serie und <b>fällt</b> beim Aufnahmewechsel wieder. Solange noch keine Aufnahme beendet ist, zeigt er einfach die bisherigen Punkte; durch Fouls kann er negativ werden.</li>
+        <li><b>Zielpunkte</b> – Mit dem Ball, der das Ziel erreicht, ist das Spiel aus. Werden mehr Kugeln angetippt als bis dahin nötig, zählt das Board nur bis zum Ziel – bei Ziel 100 und 99 Punkten also genau <b>einen</b> Ball, auch wenn die 8 angetippt wurde. So bleibt auch der Ø richtig.</li>
       </ul>
 
       <div class="hint">Diese Demo speichert den Spielstand lokal in deinem Browser (kein Server, keine Anmeldung).</div>
@@ -918,14 +919,20 @@
   // Klick auf Kugel n = "es liegen noch n Kugeln" -> (ballsLeft - n) Punkte fuer die Aufnahme (4.7).
   function hit(n) {
     if (state.locked) return;
-    const gained = state.ballsLeft - n;
+    // Mit dem Ball, der das Ziel erreicht, ist das Spiel aus - was der Schreiber darueber
+    // hinaus antippt, zaehlt nicht (sonst stimmt auch der Durchschnitt nicht mehr).
+    const ziel = state.target > 0 ? state.target : Infinity;
+    const rest = ziel - (state.turn === 1 ? state.s1 : state.s2);
+    const gained = Math.min(state.ballsLeft - n, rest);
     if (gained <= 0) return;               // oberste Kugel angeklickt = nichts versenkt
     pushHistory();
     markStart();
     if (state.phase === "break") state.phase = "play";     // gefallene Kugel beendet die Eroeffnungsphase
     if (state.turn === 1) { state.s1 += gained; state.run1 += gained; state.consec1 = 0; }
     else                  { state.s2 += gained; state.run2 += gained; state.consec2 = 0; }
-    state.ballsLeft = n;   // legal versenkte Kugel bricht die Foulserie (4.11) -> Warnung weg
+    // folgt den GEZAEHLTEN Baellen: im Normalfall gleich n, bei einer Kappung mehr -
+    // dadurch entfaellt der Rack-Neuaufbau unten von selbst (Spiel ist ohnehin aus).
+    state.ballsLeft -= gained;   // legal versenkte Kugel bricht die Foulserie (4.11) -> Warnung weg
     if (state.ballsLeft <= 1) {            // nur der Break-Ball liegt noch -> die 14 wieder aufbauen
       state.ballsLeft = 15;
       state.pendingRebuilds++;

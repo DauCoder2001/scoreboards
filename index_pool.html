@@ -99,7 +99,10 @@
              height: 8vmin; line-height: 8vmin; }
   .player-left { color: red; }
   .player-right { color: blue; }
-  .edit-btn { font-size: 2.5vmin; margin-top: 1vmin; cursor: pointer; }
+  /* display: block nimmt den Knopf aus der Grundlinien-Ausrichtung - sonst bleibt der
+     Abstand am Strut der Namenszeile haengen und ein kleineres Margin wirkt gar nicht;
+     margin auto haelt ihn zentriert. */
+  .edit-btn { font-size: 2.5vmin; display: block; margin: 0.4vmin auto 0; cursor: pointer; }
 
   /* Score Hauptbereich */
   /* Tippflaechen: die Klick-Listener haengen an #s1/#s2, also an der ganzen Grid-Zelle.
@@ -109,7 +112,7 @@
      - aussen 8vmin seitlich / 12vmin unten Abstand zu Bildschirmrand und unterer Leiste
      - Ausgleich, damit die Ziffern unter den ✏️-Buttons bleiben:
        L = 4 − seitlich + Mitte/2 = 4 − 8 + 6 = 2vmin
-     - Ziffernhoehe unveraendert 7vmin: (unten 12 + innen 2) / 2 */
+     - Ziffern 9,65vmin ueber der Mitte: (unten 12 + innen 7,3) / 2 */
   #scores {
     display: grid; grid-template-columns: 1fr 12vmin 1fr; padding: 0 8vmin 12vmin;
     flex: 1 1 auto; min-height: 20vh; position: relative; z-index: 1;
@@ -118,9 +121,9 @@
     display: flex; justify-content: center; align-items: center;
     font-size: 34.5vmin; font-weight: bold; user-select: none; cursor: pointer;
   }
-  #s1 { color: red;  padding: 0 0 2vmin 2vmin; }
-  #s2 { color: blue; padding: 0 2vmin 2vmin 0; }
-  #colon { font-size: 13.8vmin; font-weight: bold; display: flex; align-items: center; justify-content: center; padding-bottom: 2vmin; }
+  #s1 { color: red;  padding: 0 0 7.3vmin 2vmin; }
+  #s2 { color: blue; padding: 0 2vmin 7.3vmin 0; }
+  #colon { font-size: 13.8vmin; font-weight: bold; display: flex; align-items: center; justify-content: center; padding-bottom: 7.3vmin; }
 
   /* Untere Leiste (wie 14.1): Undo links, Seitenwechsel mittig */
   #bottom-bar {

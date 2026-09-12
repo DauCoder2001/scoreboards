@@ -207,7 +207,44 @@
     line-height: 1;
     padding: 0 1vmin;
     margin-top: 20.3vmin;   /* auf Ziffernmitte; alles vmin-basiert, traegt ueber Bildschirmgroessen */
+    position: relative;     /* Anker fuer das Mini-Protokoll */
   }
+
+  /* Mini-Protokoll: Knopf und Tabelle haengen absolut am Doppelpunkt und stehen damit
+     vollstaendig ausserhalb des Flusses - die grossen Ziffern koennen sich beim Ein- und
+     Ausblenden nicht verschieben. Offen bleibt die Box des Doppelpunkts erhalten, nur
+     sein Zeichen wird unsichtbar. */
+  #miniLogBtn {
+    position: absolute; bottom: calc(100% + 0.8vmin); left: 50%; transform: translateX(-50%);
+    font-size: 2vmin; line-height: 1; font-weight: normal; padding: 0.5vmin 1.4vmin; margin: 0;
+    border-radius: 0.8vmin; border: 1px solid var(--button-border); background: var(--button-bg);
+    color: #555; cursor: pointer; opacity: 0.7;
+  }
+  #miniLogBtn:hover { opacity: 1; }
+  #colon.mini-offen { color: transparent; }
+
+  #mini-log {
+    /* an der Oberkante des Doppelpunkts verankert und nach unten wachsend - zentriert
+       wuerde die Tabelle bei fuenf Zeilen den Knopf darueber verdecken */
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 10;
+    border-collapse: separate; border-spacing: 0;
+    font-size: 2.1vmin; font-weight: normal; line-height: 1.25; text-align: center;
+    color: var(--text); background: #fff; border: 1px solid #bbb; border-radius: 0.9vmin;
+    overflow: hidden; box-shadow: 0 0.4vmin 1.2vmin rgba(0,0,0,0.18);
+  }
+  #mini-log th, #mini-log td { padding: 0.55vmin 0.9vmin; border-bottom: 1px solid #e6e6e6; white-space: nowrap; }
+  #mini-log tr:last-child td { border-bottom: 0; }
+  #mini-log thead th { background: #f2f5fa; color: #1f3b73; font-size: 1.8vmin; font-weight: bold; }
+  #mini-log .ml-no { color: #555; font-weight: bold; }
+  #mini-log .ml-kommt { color: #b4b2a9; }            /* Nummer einer noch leeren Vorschauzeile */
+  #mini-log .pz-f  { color: #cc0000; font-weight: bold; }
+  #mini-log .pz-f3 { color: #a30000; font-weight: bold; }
+  #mini-log .pz-s  { color: #1a7a1a; font-weight: bold; }
+  #mini-log .pz-v  { color: #1133cc; font-weight: bold; }
+  #mini-log .ml-live { color: #1f3b73; font-style: italic; }
+  /* Helle Toene, damit die Textfarben des Protokolls darauf lesbar bleiben */
+  #mini-log tr.ml-schluss   td { background: #ffc9c9; }   /* letzte Aufnahme des Matches */
+  #mini-log tr.ml-vorletzte td { background: #ffeba8; }   /* die davor */
 
   /* Kugelbereich */
   #balls {
@@ -577,7 +614,10 @@
 
     <div class="player-mid">
       <button id="swapBtn" type="button" onclick="swap()">↔ Seitenwechsel</button>
-      <div id="colon">:</div>
+      <div id="colon">:
+        <button id="miniLogBtn" type="button" title="Letzte Aufnahmen" onclick="toggleMiniLog()">☰</button>
+        <table id="mini-log" hidden></table>
+      </div>
     </div>
 
     <div class="player-box">
@@ -786,6 +826,7 @@
         <li><b>Aufn.</b> – Zahl der <b>beendeten</b> Aufnahmen. Die laufende zählt erst mit, wenn sie durch <b>➜ Verschossen</b>, <b>⚠ Foul</b> oder <b>🛡 Sicherheit</b> endet.</li>
         <li><b>Ø</b> – <b>Punkte ÷ beendete Aufnahmen</b>, auf eine Nachkommastelle gerundet. Die Punkte wachsen mit jeder Kugel, die Aufnahmen springen erst beim Wechsel – der Ø <b>steigt</b> deshalb während einer Serie und <b>fällt</b> beim Aufnahmewechsel wieder. Solange noch keine Aufnahme beendet ist, zeigt er einfach die bisherigen Punkte; durch Fouls kann er negativ werden.</li>
         <li><b>Zielpunkte</b> – Mit dem Ball, der das Ziel erreicht, ist das Spiel aus. Werden mehr Kugeln angetippt als bis dahin nötig, zählt das Board nur bis zum Ziel – bei Ziel 100 und 99 Punkten also genau <b>einen</b> Ball, auch wenn die 8 angetippt wurde. So bleibt auch der Ø richtig.</li>
+        <li><b>☰ Letzte Aufnahmen</b> – Der kleine Knopf über dem Doppelpunkt blendet an dessen Stelle eine kompakte Tabelle ein: die letzten drei Aufnahmen (die laufende zählt mit) und darunter die nächsten, noch leeren. <b>Gelb</b> und <b>Rot</b> markieren die beiden <b>letzten Aufnahmen des Matches</b> – sie erscheinen also erst, wenn das Aufnahmen-Limit in Sicht kommt.</li>
       </ul>
 
       <div class="hint">Diese Demo speichert den Spielstand lokal in deinem Browser (kein Server, keine Anmeldung).</div>
@@ -1216,6 +1257,7 @@
 
     drawBalls();
     if (logOpen) buildProtocol();
+    buildMiniLog();   // offenes Mini-Protokoll ebenso
     checkEnd();
   }
 
@@ -1259,15 +1301,10 @@
     const el = document.getElementById("log-time");
     if (el) el.textContent = spielzeitText();
   }
-  function buildProtocol() {
-    const sum = document.getElementById("log-summary");
-    sum.innerHTML =
-      playerSummary(state.player1, state.s1, state.high1, state.inn1, "#cc0000", !state.locked && state.turn === 1) +
-      '<div class="ls-target"><div style="font-size:15px;font-weight:bold;">Ziel: ' + state.target + ' Pkt.</div>' +
-        (state.targetInn > 0 ? '<div style="font-size:15px;font-weight:bold;">' + state.targetInn + ' Aufn.</div>' : '') + '</div>' +
-      playerSummary(state.player2, state.s2, state.high2, state.inn2, "#1133cc", !state.locked && state.turn === 2);
-
-    // Aufnahmen paaren: n-te Aufnahme von Rot + n-te von Blau in EINE Zeile "Aufn. n".
+  // Aufnahmen paaren: n-te Aufnahme von Rot + n-te von Blau in EINE Zeile "Aufn. n".
+  // Die laufende (noch nicht beendete) Aufnahme kommt in die Zeile des Spielers am Tisch.
+  // Quelle fuer das grosse Protokoll UND das Mini-Protokoll.
+  function pairInnings() {
     const paired = [];
     const rowAt = (n) => paired[n] || (paired[n] = { n: n, p1: null, p2: null, live1: null, live2: null });
     let c1 = 0, c2 = 0;
@@ -1275,8 +1312,6 @@
       if (e.t === "rack") return;   // Rack-Grenze steht als Schraegstrich in der Punkte-Spalte
       if (e.p === 1) rowAt(++c1).p1 = e; else rowAt(++c2).p2 = e;
     });
-
-    // Laufende (noch nicht beendete) Aufnahme in die Zeile des Spielers am Tisch.
     if (!state.locked) {
       const lp = state.turn;
       const run = (lp === 1 ? state.run1 : state.run2);
@@ -1285,6 +1320,70 @@
       const ln = (lp === 1 ? c1 : c2) + 1;
       if (lp === 1) rowAt(ln).live1 = live; else rowAt(ln).live2 = live;
     }
+    return paired;
+  }
+
+  // Eine Spielerzelle des Mini-Protokolls: Zeichen aus der F-Spalte + Punktwert,
+  // Farben wie im grossen Protokoll.
+  function miniZelle(e, live) {
+    if (e) {
+      const isFoul = (e.kind === "foul" || e.kind === "foul3" || e.kind === "break");
+      const cls = (e.kind === "foul3") ? "pz-f3" : isFoul ? "pz-f"
+                : (e.kind === "safety") ? "pz-s" : (e.kind === "run") ? "pz-v" : "";
+      const mark = (e.kind === "safety") ? "S" : (e.kind === "run") ? "V" : (e.mark || "");
+      const val = (e.segs && e.segs.length > 1) ? e.segs.join("/") : e.pkt;
+      return '<td class="' + cls + '">' + (mark ? mark + " " : "") + val + '</td>';
+    }
+    if (live) {
+      const v = (live.segs && live.segs.length > 1) ? live.segs.join("/") : live.segs[0];
+      return '<td class="ml-live">▶ ' + v + '</td>';
+    }
+    return '<td></td>';
+  }
+
+  // Mini-Protokoll: die letzten drei Aufnahmen (die laufende zaehlt mit) und darunter
+  // bis zu zwei leere Vorschauzeilen, begrenzt auf das Aufnahmen-Limit.
+  // Gelb und Rot markieren die beiden LETZTEN Aufnahmen des Matches - sie wandern also
+  // nicht mit, sondern tauchen erst auf, wenn das Ende in Sicht kommt.
+  function buildMiniLog() {
+    const tbl = document.getElementById("mini-log");
+    if (!tbl || tbl.hidden) return;
+    const paired = pairInnings().filter(Boolean);
+    const zeilen = paired.slice(-3);
+    const limit = state.targetInn > 0 ? state.targetInn : 0;
+    let naechste = (paired.length ? paired[paired.length - 1].n : 0) + 1;
+    for (let i = 0; i < 2; i++, naechste++) {
+      if (limit && naechste > limit) break;
+      zeilen.push({ n: naechste, kommt: true });
+    }
+    let rows = "";
+    zeilen.forEach(r => {
+      const cls = (limit && r.n === limit) ? ' class="ml-schluss"'
+                : (limit && r.n === limit - 1) ? ' class="ml-vorletzte"' : "";
+      const no = '<td class="' + (r.kommt ? "ml-kommt" : "ml-no") + '">' + r.n + '</td>';
+      rows += '<tr' + cls + '>' + no + miniZelle(r.p1, r.live1) + miniZelle(r.p2, r.live2) + '</tr>';
+    });
+    tbl.innerHTML = '<thead><tr><th>Aufn.</th><th>Sp. 1</th><th>Sp. 2</th></tr></thead><tbody>' + rows + '</tbody>';
+  }
+
+  let miniOffen = false;
+  function toggleMiniLog() {
+    miniOffen = !miniOffen;
+    document.getElementById("mini-log").hidden = !miniOffen;
+    document.getElementById("colon").classList.toggle("mini-offen", miniOffen);
+    document.getElementById("miniLogBtn").textContent = miniOffen ? "✕" : "☰";
+    buildMiniLog();
+  }
+
+  function buildProtocol() {
+    const sum = document.getElementById("log-summary");
+    sum.innerHTML =
+      playerSummary(state.player1, state.s1, state.high1, state.inn1, "#cc0000", !state.locked && state.turn === 1) +
+      '<div class="ls-target"><div style="font-size:15px;font-weight:bold;">Ziel: ' + state.target + ' Pkt.</div>' +
+        (state.targetInn > 0 ? '<div style="font-size:15px;font-weight:bold;">' + state.targetInn + ' Aufn.</div>' : '') + '</div>' +
+      playerSummary(state.player2, state.s2, state.high2, state.inn2, "#1133cc", !state.locked && state.turn === 2);
+
+    const paired = pairInnings();
 
     // Baut die drei Zellen (F, Pkt, Gesamt) einer Spielerseite. Pkt zeigt die Slash-Notation
     // (Punkte je Rack) bei Mehr-Rack-Aufnahmen, sonst die Einzahl.

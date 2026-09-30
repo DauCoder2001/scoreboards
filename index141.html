@@ -1,20 +1,14 @@
 <!DOCTYPE html>
-<!--
-  Billard-Turnier — Standalone-Scoreboard (14.1 endlos)
-  Copyright (c) 2026 Matthias Haas
-  SPDX-License-Identifier: MIT
-  Lizenz: MIT — siehe LICENSE im selben Ordner (https://opensource.org/licenses/MIT)
--->
 <html lang="de">
 <head>
+<link rel="manifest" href="manifest.json">
 <meta charset="UTF-8">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#0d88d0">
-<link rel="manifest" href="manifest.json">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1">
-<title>14.1 Scoreboard – Standalone</title>
+<title>14.1 Scoreboard</title>
 
 <style>
   :root {
@@ -29,7 +23,9 @@
     --disabled-opacity: 0.55;
   }
 
-  * { box-sizing: border-box; }
+  * {
+    box-sizing: border-box;
+  }
 
   html, body {
     margin: 0;
@@ -38,9 +34,15 @@
     font-family: Arial, sans-serif;
     background: var(--bg);
     touch-action: manipulation;
+    /* Kiosk: keine Text-/Element-Auswahl auf dem Tablet (iOS braucht die -webkit-Varianten) */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
 
-  body { overflow: hidden; }
+  body {
+    overflow: hidden;
+  }
 
   #app {
     display: flex;
@@ -73,6 +75,7 @@
     font-weight: bold;
   }
 
+  /* Zur Tablet-Startseite */
   #home-btn {
     font-size: 3vmin;
     line-height: 1;
@@ -85,7 +88,7 @@
     cursor: pointer;
   }
 
-  /* Hilfe / Neues Match in der Kopfzeile (kompakt wie Demo, helleres Blau) */
+  /* Hilfe / Neues Match in der Kopfzeile (kompakt wie Demo/Home, helleres Blau) */
   .hdr-btn {
     font-size: 2.4vmin;
     line-height: 1;
@@ -149,7 +152,7 @@
     font-weight: bold;
   }
 
-  .player-left { color: var(--red); }
+  .player-left  { color: var(--red); }
   .player-right { color: var(--blue); }
 
   /* Name: konstantes Padding, damit die Aktiv-Markierung die Hoehe nicht aendert */
@@ -195,8 +198,13 @@
     line-height: 1;
   }
 
-  #s1 { color: var(--red); }
-  #s2 { color: var(--blue); }
+  #s1 {
+    color: var(--red);
+  }
+
+  #s2 {
+    color: var(--blue);
+  }
 
   #colon {
     display: flex;
@@ -277,11 +285,13 @@
     padding: 0;
     position: relative;
     background: var(--c, #ccc);
+    /* Kugel-Look: Schattierung unten/rechts + leichte Aufhellung oben links + Wurfschatten */
     box-shadow:
       inset -1.1vmin -1.4vmin 2.4vmin rgba(0,0,0,.45),
       inset 0.5vmin 0.8vmin 1.4vmin rgba(255,255,255,.22),
       0 0.35vmin 0.7vmin rgba(0,0,0,.35);
   }
+  /* Glanzpunkt oben links wie auf einer polierten Kugel */
   .ball::after {
     content: '';
     position: absolute;
@@ -291,6 +301,7 @@
     background: radial-gradient(ellipse at center, rgba(255,255,255,.95), rgba(255,255,255,0) 70%);
     pointer-events: none;
   }
+  /* Weisser Nummernkreis in der Mitte */
   .ball .num {
     width: 52%; height: 52%;
     border-radius: 50%;
@@ -300,6 +311,7 @@
     font-size: 0.8em;
     box-shadow: inset 0 0 0.4vmin rgba(0,0,0,.3);
   }
+  /* Halbe (9-15): weisse Kugel mit farbigem Mittelband */
   .ball.stripe {
     background: linear-gradient(to bottom,
       #fdfdf2 0%, #fdfdf2 18%,
@@ -307,7 +319,7 @@
       #fdfdf2 82%, #fdfdf2 100%);
   }
 
-  /* Poolfarben */
+  /* Poolfarben (an echte Kugelfarben angelehnt) */
   .b1  { --c: #f6c411; }
   .b2  { --c: #1958a8; }
   .b3  { --c: #d22b1f; }
@@ -362,21 +374,102 @@
     flex: 0 0 auto;
   }
 
-  #status.game-over { color: #a00000; }
+  #status.game-over {
+    color: #a00000;
+  }
 
   /* Portrait */
   @media (orientation: portrait) {
-    .score { font-size: 26vmin; }
-    #colon { font-size: 11vmin; }
-    .stats { font-size: 2.3vmin; }
-    button { font-size: 2.8vmin; }
+    .score {
+      font-size: 26vmin;
+    }
+
+    #colon {
+      font-size: 11vmin;
+    }
+
+    .stats {
+      font-size: 2.3vmin;
+    }
+
+    button {
+      font-size: 2.8vmin;
+    }
   }
 
   /* Sehr kleine Displays */
   @media (max-height: 700px) {
-    .score { font-size: 24vmin; }
-    .stats { font-size: 2vmin; }
+    .score {
+      font-size: 24vmin;
+    }
+
+    .stats {
+      font-size: 2vmin;
+    }
   }
+
+  #btn-back-141 { display: none; background: #6c757d; color: #fff; }
+
+  /* Turnier-Picker: Auswahl der 14.1-Partien eines laufenden Spieltags */
+  #picker141 {
+    display: none;
+    position: fixed; inset: 0;
+    background: #1f3b73;
+    z-index: 100;
+    justify-content: center;
+    align-items: flex-start;
+    overflow-y: auto;
+    padding: 4vmin;
+    box-sizing: border-box;
+  }
+  #picker141-box { background: #fff; border-radius: 2vmin; padding: 3vmin; width: 100%; max-width: 90vmin; }
+  #picker141-box h2 { color: #1f3b73; margin: 0 0 2vmin; text-align: center; font-size: 4.5vmin; }
+  #picker141-list { display: flex; flex-direction: column; gap: 1.5vmin; }
+  .pick141 {
+    font-size: 3.5vmin; padding: 2.2vmin; border: none; border-radius: 1.2vmin;
+    background: #e8f0fe; color: #1f3b73; cursor: pointer; width: 100%;
+  }
+  .pick141.busy { background: #eee; color: #999; cursor: not-allowed; }
+  .pick141 .vs { color: #888; margin: 0 1.2vmin; font-size: 2.8vmin; }
+  .pick141 .note { font-size: 2.2vmin; color: #666; }
+  #btn-frei-141 { margin-top: 3vmin; width: 100%; background: #6c757d; color: #fff; }
+
+  /* Bestaetigungs-Panel am Ende eines Turnierspiels (wie am Pool-Board) */
+  #confirm-141 {
+    display: none;
+    position: fixed; left: 50%; top: 8vh; transform: translateX(-50%);
+    z-index: 90; text-align: center;
+    background: #fff7e6; border: 0.3vmin solid #e67e22; border-radius: 1.2vmin;
+    padding: 1.2vmin 2.5vmin; box-shadow: 0 0.5vmin 2vmin rgba(0,0,0,0.35); max-width: 92vw;
+  }
+  #confirm-141-text { font-size: 2.8vmin; font-weight: bold; color: #1f3b73; margin-bottom: 0.6vmin; }
+  #confirm-141 .hinweis { display: block; font-size: 1.8vmin; color: #666; margin-top: 0.5vmin; }
+  #btn-confirm-141 { background: #28a745; color: #fff; font-size: 2.8vmin; padding: 1vmin 2.5vmin; margin: 0.5vmin; }
+  /* Wechsel zum Pool-Board: kein Spiel, deshalb andere Optik als die Liste */
+  .pick-wechsel { width: 100%; margin-top: 2vmin; background: #fff; color: #1f3b73;
+    border: 0.3vmin solid #1f3b73; font-size: 3vmin; padding: 1.8vmin; border-radius: 1.2vmin; }
+  .pick-notiz { display: block; text-align: center; font-size: 2.4vmin; color: #666; margin-top: 2.5vmin; }
+
+  /* Nachgeben-Overlay: ein anderes Geraet steuert diesen Tisch (verhindert Schreib-Krieg) */
+  #yield-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: #1f3b73;
+    color: #fff;
+    z-index: 120;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 6vmin;
+    box-sizing: border-box;
+  }
+  #yield-overlay h2 { font-size: 5vmin; margin: 0 0 2vmin; }
+  #yield-overlay p { font-size: 3vmin; margin: 0 0 4vmin; max-width: 80vmin; line-height: 1.4; }
+  #yield-overlay .row { display: flex; gap: 3vmin; flex-wrap: wrap; justify-content: center; }
+  #yield-overlay button { font-size: 3.5vmin; padding: 2vmin 4vmin; border-radius: 1.2vmin; border: none; cursor: pointer; }
+  #yield-home    { background: #28a745; color: #fff; }
+  #yield-reclaim { background: #6c757d; color: #fff; }
 
   /* Foulzaehler je Spieler */
   .fouls { font-size: 1.9vmin; margin-top: 0.4vmin; min-height: 2.2vmin; color: #b35900; font-weight: bold; }
@@ -402,6 +495,7 @@
     justify-content: space-between; padding: 10px 14px; }
   #log-title { font-size: 18px; font-weight: bold; }
   #log-head-actions { display: flex; align-items: center; gap: 8px; }
+  #log-head-actions a { color: #fff; font-size: 13px; text-decoration: none; opacity: .92; }
   #log-head-actions button { background: rgba(255,255,255,.16); color: #fff; border: none;
     border-radius: 7px; padding: 6px 12px; font-size: 14px; margin: 0; }
   #log-summary { display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -465,111 +559,55 @@
   #help-body ul { margin: 4px 0; padding-left: 20px; }
   #help-body li { margin: 3px 0; }
   #help-body p { margin: 4px 0; }
-  #help-body .hint { margin-top: 12px; font-size: 13px; color: #666; border-top: 1px solid #eee; padding-top: 8px; }
 
   /* Druck: nur das Protokoll zeigen */
   @media print {
     body { overflow: visible; }
-    #app, #help-overlay { display: none !important; }
+    #app, #yield-overlay, #help-overlay { display: none !important; }
     #log-overlay { display: block !important; position: static; background: #fff; padding: 0; }
     #log-card { max-width: 100%; max-height: none; box-shadow: none; }
     #log-head-actions { display: none; }
     #log-scroll { overflow: visible; max-height: none; }
   }
 </style>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMzAiIGZpbGw9IiMxYTFhMWEiLz4KICA8Y2lyY2xlIGN4PSIyNCIgY3k9IjIyIiByPSI4IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjE4Ii8+CiAgPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMTUiIGZpbGw9IiNmZGZkZjIiLz4KICA8dGV4dCB4PSIzMiIgeT0iMzkiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjIyIiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0iIzExMSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+ODwvdGV4dD4KPC9zdmc+Cg==">
+  <!-- Eigene Dialoge (alert, confirmModal, promptModal). Als Modul eingebunden, damit
+     der Bau es mitnimmt; es laeuft trotzdem vor dem Hauptskript, weil es davor steht. -->
+  <script type="module" crossorigin>(function(){const n=document.createElement("link").relList;if(n&&n.supports&&n.supports("modulepreload"))return;for(const i of document.querySelectorAll('link[rel="modulepreload"]'))l(i);new MutationObserver(i=>{for(const o of i)if(o.type==="childList")for(const a of o.addedNodes)a.tagName==="LINK"&&a.rel==="modulepreload"&&l(a)}).observe(document,{childList:!0,subtree:!0});function r(i){const o={};return i.integrity&&(o.integrity=i.integrity),i.referrerPolicy&&(o.referrerPolicy=i.referrerPolicy),i.crossOrigin==="use-credentials"?o.credentials="include":i.crossOrigin==="anonymous"?o.credentials="omit":o.credentials="same-origin",o}function l(i){if(i.ep)return;i.ep=!0;const o=r(i);fetch(i.href,o)}})();(function(){const t=document.createElement("style");t.textContent=".app-dlg-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:99999;}.app-dlg-box{background:#fff;color:#333;border-radius:10px;padding:22px 24px;max-width:460px;width:90%;box-shadow:0 12px 40px rgba(0,0,0,.35);font-family:Arial,sans-serif;}.app-dlg-box .app-dlg-title{font-weight:bold;color:#1f3b73;font-size:16px;margin-bottom:10px;}.app-dlg-box .app-dlg-msg{white-space:pre-wrap;font-size:15px;line-height:1.5;}.app-dlg-box .app-dlg-input{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;margin-top:12px;box-sizing:border-box;-webkit-user-select:text;user-select:text;-webkit-touch-callout:default;}.app-dlg-box .app-dlg-actions{text-align:right;margin-top:18px;}.app-dlg-box .app-dlg-actions button{margin-left:8px;}.app-dlg-box button{background:#1f3b73;color:#fff;border:none;padding:9px 22px;border-radius:7px;font-weight:bold;font-size:14px;cursor:pointer;}.app-dlg-box button:hover{background:#16294f;}.app-dlg-box button.app-dlg-cancel{background:#6c757d;}.app-dlg-box button.app-dlg-cancel:hover{background:#5a6268;}",(document.head||document.documentElement).appendChild(t);function n(l){const i=document.createElement("div");return i.className="app-dlg-overlay",i.innerHTML='<div class="app-dlg-box" role="dialog" aria-modal="true">'+l+"</div>",document.body.appendChild(i),i}const r='<div class="app-dlg-title">🎱 Billard-Turnier</div>';window.alert=function(l){const i=n(r+'<div class="app-dlg-msg"></div><div class="app-dlg-actions"><button type="button" class="app-dlg-ok">OK</button></div>');i.querySelector(".app-dlg-msg").textContent=String(l??"");const o=()=>{i.remove(),document.removeEventListener("keydown",a)};function a(s){(s.key==="Escape"||s.key==="Enter")&&o()}i.querySelector(".app-dlg-ok").addEventListener("click",o),i.addEventListener("click",s=>{s.target===i&&o()}),document.addEventListener("keydown",a),i.querySelector(".app-dlg-ok").focus()},window.confirmModal=function(l){return new Promise(i=>{const o=n(r+'<div class="app-dlg-msg"></div><div class="app-dlg-actions"><button type="button" class="app-dlg-cancel">Abbrechen</button><button type="button" class="app-dlg-ok">OK</button></div>');o.querySelector(".app-dlg-msg").textContent=String(l??"");const a=c=>{o.remove(),document.removeEventListener("keydown",s),i(c)};function s(c){c.key==="Escape"?a(!1):c.key==="Enter"&&a(!0)}o.querySelector(".app-dlg-ok").addEventListener("click",()=>a(!0)),o.querySelector(".app-dlg-cancel").addEventListener("click",()=>a(!1)),o.addEventListener("click",c=>{c.target===o&&a(!1)}),document.addEventListener("keydown",s),o.querySelector(".app-dlg-ok").focus()})},window.promptModal=function(l,i,o){return o=o||{},new Promise(a=>{const s=n(r+'<div class="app-dlg-msg"></div><input type="text" class="app-dlg-input"><div class="app-dlg-actions"><button type="button" class="app-dlg-cancel">Abbrechen</button><button type="button" class="app-dlg-ok">OK</button></div>');s.querySelector(".app-dlg-msg").textContent=String(l??"");const c=s.querySelector(".app-dlg-input");c.value=i==null?"":String(i),o.maxLength&&(c.maxLength=o.maxLength),o.numeric&&(c.inputMode="numeric",c.addEventListener("input",()=>{let u=c.value.replace(/\D/g,"");o.maxLength&&(u=u.slice(0,o.maxLength)),c.value=u}));const d=u=>{s.remove(),document.removeEventListener("keydown",p),a(u)};function p(u){u.key==="Escape"&&d(null)}s.querySelector(".app-dlg-ok").addEventListener("click",()=>d(c.value)),s.querySelector(".app-dlg-cancel").addEventListener("click",()=>d(null)),c.addEventListener("keydown",u=>{u.key==="Enter"&&(u.preventDefault(),d(c.value))}),s.addEventListener("click",u=>{u.target===s&&d(null)}),document.addEventListener("keydown",p),setTimeout(()=>{c.focus(),c.select()},30)})}})();function Ie(){const t=document.getElementById("app");if(!t)return;const n="";t.style.height=n,t.style.minHeight=n}window.addEventListener("resize",Ie);let A="offline",Q="1";async function xe(){const t=new URLSearchParams(window.location.search),n=t.get("table"),r=n&&/^[1-9]\d*$/.test(n)?n:null;return t.get("partie"),A="offline",Q=r??"1",{betriebsart:A,tisch:Q}}function y(){return A==="angebunden"}function J(){return y()?new URL("../?geraet",window.location.href).toString():new URL("./index.html",window.location.href).toString()}const H={};function $(t,n){return{pfad:n}}async function Se(){}const Z=new Map,Be=new Map;function ie(t,n){Be.set(t,n);const r=n==null?null:structuredClone(n);(Z.get(t)??new Set).forEach(l=>l({val:()=>r}))}function oe(t){const n=/^tables\/(\d+)$/.exec(t);return n?n[1]:null}const V=t=>`cuedesk-scoreboard-tisch-${t}`;let R=null;async function b(t,n){const r=oe(t.pfad);if(r&&(ie(t.pfad,n),A!=="zuschauer")){if(!y()){try{n===null?localStorage.removeItem(V(r)):localStorage.setItem(V(r),JSON.stringify(n))}catch{}return}n?.owner,R!==null&&window.clearTimeout(R),R=window.setTimeout(()=>{Le()},150)}}async function Le(){R=null}function ae(t,n){const r=Z.get(t.pfad)??new Set;if(r.add(n),Z.set(t.pfad,r),t.pfad==="tournament/active"||t.pfad==="tournament/active/status"||t.pfad==="tournament/tvView"||t.pfad==="tournament_archive")return queueMicrotask(()=>n({val:()=>null})),()=>r.delete(n);if(t.pfad.startsWith("tournament/")||t.pfad==="system/tvSettings")return queueMicrotask(()=>n({val:()=>null})),()=>r.delete(n);if(t.pfad==="tables")return queueMicrotask(()=>n({val:()=>null})),()=>r.delete(n);const l=oe(t.pfad);if(!l)return()=>r.delete(n);if(!y()&&A!=="zuschauer"){let i=null;try{const o=localStorage.getItem(V(l));i=o?JSON.parse(o):null}catch{i=null}return queueMicrotask(()=>ie(t.pfad,i)),()=>r.delete(n)}return Te(t.pfad),()=>r.delete(n)}async function Te(t){}async function se(t,n){return/^tournament\/active\/schedule\/(.+)$/.exec(t.pfad),(l=>({committed:!1,snapshot:{val:()=>l}}))(null)}async function O(t,n="",r={}){return null}async function ze(t,n){return{ok:!1,fehler:"Nicht mit CueDesk verbunden."}}async function ce(t,n,r){return{ok:!1,fehler:"Nicht mit CueDesk verbunden."}}function Ae(t,n){if(!t||t.tournamentMatchId)return!1;if(t.frei)return!0;const r=!!t.player1&&t.player1!=="Spieler 1"||!!t.player2&&t.player2!=="Spieler 2";return(t.s1||0)!==0||(t.s2||0)!==0||Array.isArray(t.log)&&t.log.length>0||!!t.startedAt||r}function de(t,n){return!t||!t.schedule?[]:Object.entries(t.schedule).filter(([,r])=>r.status!=="pending"||!r.player1||!r.player2?!1:n==="14.1"?r.discipline==="14.1":!!r.discipline&&r.discipline!=="14.1").map(([r,l])=>({id:r,...l}))}function Me(t,n){return t===1?"Ein weiteres Spiel wartet noch:":`${t} weitere Spiele warten noch:`}function Ce(t,n,r,l){return t&&!n&&!r&&l>0}function De(t){const n=new URL(t);return n.searchParams.delete("spiel"),n.pathname+n.search+n.hash}function Pe(t,n){return!!t&&t.status==="running"&&String(t.table)===String(n)}function Ne(t,n,r){if(!(!t||t.status!=="pending")&&!(t.player1==null||t.player2==null))return t.status="running",t.table=n,t.startedAt=r,t}function Fe(t,n){if(!Pe(t,n))return;const r=t;return r.status="pending",r.table=null,r.startedAt=null,r}function qe(t,n,r){return!n||r||!t||t.status!=="running"||!t.schedule?!1:t.schedule[n]?.status==="completed"}function Re(t,n,r,l,i){return r===l?`🏁 Unentschieden ${r}:${l}`:`🏁 ${r>l?t:n} gewinnt ${Math.max(r,l)}:${Math.min(r,l)}`}function Oe(t,n,r=6e4){let l=Date.now();const i=()=>{l=Date.now()};["pointerdown","keydown","touchstart"].forEach(o=>document.addEventListener(o,i,{passive:!0})),setInterval(()=>{Date.now()-l>=n&&(l=Date.now(),t())},r)}function He(t,n,r=6e4){Oe(()=>{window.location.href=t},n,r)}function $e(){if(!("wakeLock"in navigator)){console.info('[wake-lock] Screen Wake Lock nicht unterstuetzt – ggf. Auto-Sperre am Geraet manuell auf "Nie" stellen.');return}let t=null;const n=async()=>{if(!(t||document.visibilityState!=="visible"))try{t=await navigator.wakeLock.request("screen"),t.addEventListener("release",()=>{t=null})}catch{t=null}};n(),document.addEventListener("visibilitychange",()=>{document.visibilityState==="visible"&&n()}),["pointerdown","keydown","touchstart"].forEach(r=>document.addEventListener(r,n,{passive:!0})),setInterval(n,3e4)}function Ge(t="fsBtn"){const n=document.getElementById(t);if(!n)return;const r=document.documentElement,l=!!(r.requestFullscreen||r.webkitRequestFullscreen),i=window.navigator.standalone===!0||window.matchMedia("(display-mode: standalone)").matches||window.matchMedia("(display-mode: fullscreen)").matches;if(!l||i){n.style.display="none";return}const o=()=>!!(document.fullscreenElement||document.webkitFullscreenElement),a=()=>{n.textContent=o()?"⤡ Beenden":"⤢ Vollbild"};n.addEventListener("click",()=>{try{const s=o()?(document.exitFullscreen||document.webkitExitFullscreen).call(document):(r.requestFullscreen||r.webkitRequestFullscreen).call(r);s&&typeof s.catch=="function"&&s.catch(()=>{})}catch{}}),["fullscreenchange","webkitfullscreenchange"].forEach(s=>document.addEventListener(s,a)),a()}const je=/(^|[\s,>])(#log-|\.pz-|\.ls-|#ptable|#summary|#legend)/;function Ue(){const t=[];for(const n of Array.from(document.styleSheets)){let r;try{r=n.cssRules}catch{continue}if(r)for(const l of Array.from(r))l.selectorText&&je.test(l.selectorText)&&t.push(l.cssText)}return t.join(`
+`)}const _e=`
+  body { font-family: Arial, sans-serif; background: #fff; color: #222; margin: 16px; }
+  h1 { font-size: 18px; margin: 0 0 2px; }
+  .kopf-datum { font-size: 12px; color: #666; margin: 0 0 14px; }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed;
+          font-size: 14px; text-align: center; }
+  th, td { padding: 5px 2px; border-bottom: 1px solid #eee; }
+  thead th { background: #f4f4f4; }
+  .fuss { margin-top: 14px; font-size: 11px; color: #888; }
+  @page { size: A4 portrait; margin: 12mm; }
+`;function X(t){const n=document.getElementById(t);return n?n.innerHTML:""}function ue(t){const n=document.getElementById(t);if(!n)return"";const r=[];n.querySelectorAll(".ls-p").forEach(i=>{const o=a=>{const s=i.querySelector(a);return s?s.textContent.trim():""};r.push([o(".ls-name"),o(".ls-score"),o(".ls-stats")].filter(Boolean).join("  "))});const l=n.querySelector(".ls-target");if(l){const i=Array.from(l.children).map(o=>o.textContent.trim()).filter(Boolean).join(" · ");i&&r.push(i)}return r.length?r.filter(Boolean).join(`
+`):n.textContent.replace(/\s+/g," ").trim()}function Ke(t){const n=document.getElementById(t);if(!n)return"";const r=Array.from(n.querySelectorAll(".ls-name")).map(l=>l.textContent.trim()).filter(Boolean);return r.length===2?r[0]+" vs. "+r[1]:""}function Ze(t,n){const r=[],l=ue(n);l&&r.push(l,"");const i=document.getElementById(t);if(i){const o=i.querySelector("thead tr:last-child"),s=(o?[o]:[]).concat(Array.from(i.querySelectorAll("tbody tr"))).map(d=>Array.from(d.cells).map(p=>p.textContent.trim())),c=[];s.forEach(d=>d.forEach((p,u)=>{c[u]=Math.max(c[u]||0,p.length)})),s.forEach(d=>r.push(d.map((p,u)=>p.padEnd(c[u])).join("  ").trimEnd()))}return r.join(`
+`)}function Ve(t){return String(t).replace(/ä/g,"ae").replace(/ö/g,"oe").replace(/ü/g,"ue").replace(/Ä/g,"Ae").replace(/Ö/g,"Oe").replace(/Ü/g,"Ue").replace(/ß/g,"ss").replace(/[^A-Za-z0-9._-]+/g,"-").replace(/-+/g,"-").replace(/_+/g,"_").replace(/^[-_]+|[-_]+$/g,"")}function We(t){try{Je(t)}catch(n){console.error("Teilen-Knopf nicht verfuegbar:",n)}}function Je(t){const n=t||{},r=document.getElementById(n.btnId||"log-share");if(!r)return;const l=i=>typeof i=="function"?i():i;r.addEventListener("click",()=>{const i=l(n.titel)||"Protokoll",o=Ke(n.summaryId||"log-summary"),a=o?i+" - "+o:i,s=new Date,c=s.toISOString().slice(0,10),d=Ve(l(n.dateiBasis)||i)+"_"+c+".html",p=(Ue()||"")+_e,u='<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>'+a+"</title><style>"+p+"</style></head><body><h1>"+a+'</h1><p class="kopf-datum">'+s.toLocaleString("de-DE")+'</p><div id="'+(n.summaryId||"log-summary")+'">'+X(n.summaryId||"log-summary")+"</div>"+(document.getElementById(n.tableId||"log-table")?document.getElementById(n.tableId||"log-table").outerHTML:"")+'<div id="'+(n.legendId||"log-legend")+'">'+X(n.legendId||"log-legend")+'</div><p class="fuss">Erstellt mit dem Billard-Turnier-Scoreboard.</p></body></html>';let x=null;try{x=new File([u],d,{type:"text/html"})}catch{}if(x&&navigator.canShare&&navigator.canShare({files:[x]})){const N=navigator.share({files:[x],title:a});N&&typeof N.catch=="function"&&N.catch(()=>{});return}const _='Vollstaendiges Protokoll bitte ueber "Drucken" als PDF sichern - es ist fuer den Mailtext zu lang.',S=o?o+`
 
-<script>
-  /* Eigene Dialoge (Ersatz fuer alert/confirm/prompt) – inline, damit die Datei eigenstaendig ist. */
-  (function () {
-    const style = document.createElement('style');
-    style.textContent =
-      '.app-dlg-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:99999;}' +
-      '.app-dlg-box{background:#fff;color:#333;border-radius:10px;padding:22px 24px;max-width:460px;width:90%;box-shadow:0 12px 40px rgba(0,0,0,.35);font-family:Arial,sans-serif;}' +
-      '.app-dlg-box .app-dlg-title{font-weight:bold;color:#1f3b73;font-size:16px;margin-bottom:10px;}' +
-      '.app-dlg-box .app-dlg-msg{white-space:pre-wrap;font-size:15px;line-height:1.5;}' +
-      '.app-dlg-box .app-dlg-input{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;margin-top:12px;box-sizing:border-box;}' +
-      '.app-dlg-box .app-dlg-actions{text-align:right;margin-top:18px;}' +
-      '.app-dlg-box .app-dlg-actions button{margin-left:8px;}' +
-      '.app-dlg-box button{background:#1f3b73;color:#fff;border:none;padding:9px 22px;border-radius:7px;font-weight:bold;font-size:14px;cursor:pointer;}' +
-      '.app-dlg-box button:hover{background:#16294f;}' +
-      '.app-dlg-box button.app-dlg-cancel{background:#6c757d;}' +
-      '.app-dlg-box button.app-dlg-cancel:hover{background:#5a6268;}';
-    (document.head || document.documentElement).appendChild(style);
+`:"";let k=S+Ze(n.tableId||"log-table",n.summaryId||"log-summary");encodeURIComponent(k).length>1500&&(k=S+ue(n.summaryId||"log-summary")+`
 
-    function buildOverlay(innerHTML) {
-      const ov = document.createElement('div');
-      ov.className = 'app-dlg-overlay';
-      ov.innerHTML = '<div class="app-dlg-box" role="dialog" aria-modal="true">' + innerHTML + '</div>';
-      document.body.appendChild(ov);
-      return ov;
-    }
+`+_),window.location.href="mailto:?subject="+encodeURIComponent(a)+"&body="+encodeURIComponent(k)})}$e();Ge();Se().catch(t=>console.error("Anmeldung fehlgeschlagen:",t));const{tisch:f}=await xe(),h=$(H,"tables/"+f);let M=[],e={player1:"Spieler 1",player2:"Spieler 2",s1:0,s2:0,run1:0,run2:0,rackPts:[],high1:0,high2:0,inn1:0,inn2:0,consec1:0,consec2:0,target:60,targetInn:20,turn:1,ballsLeft:15,rackNo:1,pendingRebuilds:0,phase:"break",breaker:1,locked:!1,winnerText:"",log:[]},m=null,Y=null,w=!1,D=!1,F=0;function ee(){return!!(m&&m.status==="running")}let v=!1,E=!1;function pe(){return de(m,"14.1")}let K=new URLSearchParams(window.location.search).get("spiel");function Ye(){if(!K||!m||!m.schedule)return;const t=K;K=null,window.history.replaceState(null,"",De(location.href));const n=m.schedule[t];n&&n.status==="pending"&&n.player1&&n.player2&&fe(t)}function Qe(){const t=document.getElementById("picker141-list");if(document.getElementById("picker141-table").textContent=f,m&&m.paused){t.innerHTML='<p style="text-align:center; font-size:4vh; color:#b8860b; font-weight:bold;">⏸️ Spieltag pausiert</p>';return}const n=pe();if(n.length===0){t.innerHTML='<p style="text-align:center; color:#888;">Alle 14.1-Spiele sind vergeben.</p>',te();return}t.innerHTML=n.map(r=>{const l=r.raceTo?r.raceTo+" Pkt.":"",i=r.innings?" / "+r.innings+" Aufn.":"";return'<button class="pick141" data-id="'+r.id+'"><span>'+r.player1+'</span><span class="vs">vs</span><span>'+r.player2+'</span> <span class="note">('+l+i+")</span></button>"}).join(""),t.querySelectorAll(".pick141").forEach(r=>{r.addEventListener("click",()=>fe(r.getAttribute("data-id")))}),te()}function te(){const t=de(m,"pool");if(t.length===0)return;const n=Me(t.length),r=document.createElement("div");r.innerHTML='<span class="pick-notiz">'+n+"</span>"+t.map(l=>'<button class="pick141" type="button" data-id="'+l.id+'"><span>'+l.player1+'</span><span class="vs">vs</span><span>'+l.player2+'</span> <span class="note">'+(l.discipline||"")+"</span></button>").join("")+'<button class="pick-wechsel" type="button">🎱 Zum Pool-Board</button>',r.querySelectorAll(".pick141").forEach(l=>{l.addEventListener("click",()=>{window.location.href="index_pool.html?table="+f+"&spiel="+l.getAttribute("data-id")})}),r.querySelector(".pick-wechsel").addEventListener("click",()=>{window.location.href="index_pool.html?table="+f}),document.getElementById("picker141-list").appendChild(r)}async function fe(t){if(m&&m.paused){alert("Der Spieltag ist pausiert.");return}let n;try{n=await se($(H,"tournament/active/schedule/"+t),l=>Ne(l,f,Date.now()))}catch(l){alert("Fehler beim Starten: "+l.message);return}if(!n.committed){alert("Dieses Spiel läuft bereits an einem anderen Tisch.");return}const r=n.snapshot.val();e=B(),e.player1=r.player1,e.player2=r.player2,e.target=r.raceTo||e.target,e.targetInn=r.innings||0,e.startedAt=Date.now(),e.tournamentMatchId=t,E=!1,w=!0,g(),j(),C()}async function Xe(){const t=e.tournamentMatchId;if(t){try{(await se($(H,"tournament/active/schedule/"+t),r=>Fe(r,f))).committed||alert("Dieses Spiel gehört nicht mehr zu diesem Tisch. Der Tisch wird trotzdem freigegeben.")}catch(n){alert("Fehler: "+n.message);return}try{await b(h,null)}catch(n){alert("Fehler: "+n.message)}}}const ge=(()=>{let t=localStorage.getItem("boardId");return t||(t=crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2),localStorage.setItem("boardId",t)),t})(),et=t=>!!(t&&t.owner&&t.owner!==ge);function T(){M.push(JSON.stringify(e))}function g(){e.owner=ge,b(h,e)}function tt(){if(e.locked)return;const t=e.s1>=e.target||e.s2>=e.target,n=e.targetInn>0&&e.inn1>=e.targetInn&&e.inn2>=e.targetInn;if(!(!t&&!n)){if(t){const r=e.turn,l=r===1?e.run1:e.run2;L(r,l,0,"","end"),I(),r===1?e.inn1++:e.inn2++,e.run1=0,e.run2=0,e.rackPts=[]}e.locked=!0,e.endedAt=Date.now(),e.s1>e.s2?e.winnerText="Spiel beendet – Gewinner: "+e.player1:e.s2>e.s1?e.winnerText="Spiel beendet – Gewinner: "+e.player2:e.winnerText="Spiel beendet – Unentschieden",g(),j(),alert(e.winnerText)}}function L(t,n,r,l,i){const o=n-r,a=t===1?e.s1:e.s2;t===1?o>e.high1&&(e.high1=o):o>e.high2&&(e.high2=o);const s=e.rackPts||[],c=s.concat(n-s.reduce((d,p)=>d+p,0));e.log.push({t:"inn",p:t,balls:n,pkt:o,total:a,mark:l||"",kind:i||"run",segs:c,z:Date.now()})}function I(){for(;e.pendingRebuilds>0;)e.rackNo++,e.log.push({t:"rack",rackNo:e.rackNo,p:e.turn}),e.pendingRebuilds--}function nt(t){const n=t===1?e.run1:e.run2;n>0&&(t===1?e.s1-=n:e.s2-=n,e.ballsLeft=Math.min(15,e.ballsLeft+n))}function rt(){e.ballsLeft=15,e.pendingRebuilds++}function G(){e.turn===1?e.inn1++:e.inn2++,e.run1=0,e.run2=0,e.rackPts=[],e.turn=e.turn===1?2:1}function me(t){if(e.locked)return;const r=(e.target>0?e.target:1/0)-(e.turn===1?e.s1:e.s2),l=Math.min(e.ballsLeft-t,r);if(!(l<=0)){if(T(),P(),e.phase==="break"&&(e.phase="play"),e.turn===1?(e.s1+=l,e.run1+=l,e.consec1=0):(e.s2+=l,e.run2+=l,e.consec2=0),e.ballsLeft-=l,e.ballsLeft<=1){e.ballsLeft=15,e.pendingRebuilds++,e.rackPts||(e.rackPts=[]);const i=e.turn===1?e.run1:e.run2;e.rackPts.push(i-e.rackPts.reduce((o,a)=>o+a,0))}g()}}function lt(){if(e.locked)return;T(),P();const t=e.turn,n=t===1?e.run1:e.run2;L(t,n,0,"","run"),t===1?e.consec1=0:e.consec2=0,I(),G(),e.phase="play",g()}async function it(){if(e.locked)return;T(),P();const t=e.turn,n=t===1?e.run1:e.run2,r=n>0;t===1?e.s1-=1:e.s2-=1;let l;t===1?(e.consec1=r?1:e.consec1+1,l=e.consec1):(e.consec2=r?1:e.consec2+1,l=e.consec2),l>=3?(t===1?(e.s1-=15,e.consec1=0):(e.s2-=15,e.consec2=0),L(t,n,16,"3F","foul3"),rt(),I(),t===1?e.inn1++:e.inn2++,e.run1=0,e.run2=0,e.rackPts=[],e.turn=t,e.phase="break",e.breaker=t):(L(t,n,1,l===1?"/":"//","foul"),I(),G(),e.phase="play"),g()}function ot(){if(e.locked)return;T(),P();const t=e.turn,n=t===1?e.run1:e.run2;L(t,n,0,"","safety"),t===1?e.consec1=0:e.consec2=0,I(),G(),e.phase="play",g()}async function at(){if(e.locked)return;T(),P();const t=e.turn;nt(t),t===1?e.s1-=2:e.s2-=2,L(t,0,2,"-2","break"),await confirmModal(`Eröffnungsfoul (−2).
 
-    const TITLE = '<div class="app-dlg-title">🎱 14.1 Scoreboard</div>';
+OK = Gegner übernimmt den Tisch.
+Abbrechen = Eröffnungsstoß wird wiederholt.`)?(I(),G(),e.phase="play"):(I(),t===1?e.inn1++:e.inn2++,e.run1=0,e.run2=0,e.rackPts=[],e.turn=t,e.breaker=t,e.phase="break"),g()}function st(){M.length!==0&&(e=JSON.parse(M.pop()),g())}async function ct(t){if(e.locked)return;if(y()){const r=t===1?2:1,l=await O(t===1?"Spieler Rot":"Spieler Blau","",{id:e["player"+r+"Id"],name:e["player"+r]});if(!l)return;t===1?(e.player1=l.name,e.player1Id=l.id):(e.player2=l.name,e.player2Id=l.id),g();return}const n=(await promptModal("Neuer Name:")||"").trim();n&&(t===1?e.player1=n:e.player2=n,g())}async function dt(){if(e.locked)return;const t=await promptModal("Zielpunkte (max. 4-stellig):",e.target,{maxLength:4,numeric:!0});if(t===null)return;const n=await promptModal("Aufnahmen-Limit (max. 3-stellig):",e.targetInn,{maxLength:3,numeric:!0});if(n===null)return;const r=parseInt(t,10),l=parseInt(n,10);!isNaN(r)&&r>0&&(e.target=r),!isNaN(l)&&l>0&&(e.targetInn=l),g()}async function ut(){if(e.tournamentMatchId&&y()){if(!e.locked){if(!await confirmModal(`Das Spiel ist noch nicht zu Ende.
 
-    window.alert = function (msg) {
-      const ov = buildOverlay(TITLE +
-        '<div class="app-dlg-msg"></div>' +
-        '<div class="app-dlg-actions"><button type="button" class="app-dlg-ok">OK</button></div>');
-      ov.querySelector('.app-dlg-msg').textContent = String(msg == null ? '' : msg);
-      const close = () => { ov.remove(); document.removeEventListener('keydown', onKey); };
-      function onKey(e) { if (e.key === 'Escape' || e.key === 'Enter') close(); }
-      ov.querySelector('.app-dlg-ok').addEventListener('click', close);
-      ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
-      document.addEventListener('keydown', onKey);
-      ov.querySelector('.app-dlg-ok').focus();
-    };
+Abbrechen und zurück in den Spielplan legen? Es wird nichts gespeichert.`))return;await Xe();return}if(!await confirmModal("Ergebnis speichern und Tisch freigeben?"))return;E=!0;const t=await ce(e.tournamentMatchId);if(!t.ok){if(E=!1,alert("Speichern fehlgeschlagen: "+t.fehler+(t.endgueltig?`
 
-    window.confirmModal = function (msg) {
-      return new Promise((resolve) => {
-        const ov = buildOverlay(TITLE +
-          '<div class="app-dlg-msg"></div>' +
-          '<div class="app-dlg-actions">' +
-          '<button type="button" class="app-dlg-cancel">Abbrechen</button>' +
-          '<button type="button" class="app-dlg-ok">OK</button></div>');
-        ov.querySelector('.app-dlg-msg').textContent = String(msg == null ? '' : msg);
-        const done = (val) => { ov.remove(); document.removeEventListener('keydown', onKey); resolve(val); };
-        function onKey(e) { if (e.key === 'Escape') done(false); else if (e.key === 'Enter') done(true); }
-        ov.querySelector('.app-dlg-ok').addEventListener('click', () => done(true));
-        ov.querySelector('.app-dlg-cancel').addEventListener('click', () => done(false));
-        ov.addEventListener('click', (e) => { if (e.target === ov) done(false); });
-        document.addEventListener('keydown', onKey);
-        ov.querySelector('.app-dlg-ok').focus();
-      });
-    };
+Das Ergebnis bitte in CueDesk eintragen. Der Tisch wird freigegeben.`:"")),t.endgueltig){v=!1;try{await b(h,null)}catch{}}return}v=!1;try{await b(h,null)}catch(n){alert("Fehler: "+n.message)}return}if(y()&&(e.inn1>0||e.inn2>0)){const n=!e.locked?`Das Spiel ist noch nicht zu Ende.
 
-    window.promptModal = function (msg, vorgabe, opts) {
-      opts = opts || {};
-      return new Promise((resolve) => {
-        const ov = buildOverlay(TITLE +
-          '<div class="app-dlg-msg"></div>' +
-          '<input type="text" class="app-dlg-input">' +
-          '<div class="app-dlg-actions">' +
-          '<button type="button" class="app-dlg-cancel">Abbrechen</button>' +
-          '<button type="button" class="app-dlg-ok">OK</button></div>');
-        ov.querySelector('.app-dlg-msg').textContent = String(msg == null ? '' : msg);
-        const inp = ov.querySelector('.app-dlg-input');
-        inp.value = vorgabe == null ? '' : String(vorgabe);
-        if (opts.maxLength) inp.maxLength = opts.maxLength;          // Eingabefeld auf N Zeichen begrenzen
-        if (opts.numeric) {                                          // nur Ziffern zulassen
-          inp.inputMode = 'numeric';
-          inp.addEventListener('input', () => {
-            let v = inp.value.replace(/\D/g, '');
-            if (opts.maxLength) v = v.slice(0, opts.maxLength);
-            inp.value = v;
-          });
-        }
-        const done = (val) => { ov.remove(); document.removeEventListener('keydown', onKey); resolve(val); };
-        function onKey(e) { if (e.key === 'Escape') done(null); }
-        ov.querySelector('.app-dlg-ok').addEventListener('click', () => done(inp.value));
-        ov.querySelector('.app-dlg-cancel').addEventListener('click', () => done(null));
-        inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); done(inp.value); } });
-        ov.addEventListener('click', (e) => { if (e.target === ov) done(null); });
-        document.addEventListener('keydown', onKey);
-        setTimeout(() => { inp.focus(); inp.select(); }, 30);
-      });
-    };
-  })();
-</script>
+Als abgebrochen speichern? Die Aufnahmen zählen dann für die Statistik, das Spiel aber nicht als Sieg oder Niederlage.`:"Möchtest du dieses 14.1-Ergebnis speichern?";if(await confirmModal(n)){for(const l of[1,2])if(!e["player"+l+"Id"]){const i=l===1?2:1,o=await O("Wer war "+e["player"+l]+"?",e["player"+l],{id:e["player"+i+"Id"],name:e["player"+i]});if(!o){alert("Ohne Spielerzuordnung wird nichts gespeichert.");return}e["player"+l]=o.name,e["player"+l+"Id"]=o.id}const r=await ze();if(!r.ok){alert("Speichern fehlgeschlagen: "+r.fehler);return}}}if(await confirmModal("Neues Match starten? Alle aktuellen Punkte werden gelöscht!")){if(e.s1=0,e.s2=0,e.run1=0,e.run2=0,e.high1=0,e.high2=0,e.inn1=0,e.inn2=0,e.consec1=0,e.consec2=0,e.turn=1,e.ballsLeft=15,e.rackPts=[],M=[],e.rackNo=1,e.pendingRebuilds=0,e.phase="break",e.breaker=1,e.log=[],e.locked=!1,e.winnerText="",e.startedAt=null,e.endedAt=null,await confirmModal("Spielernamen ändern?"))if(y()){const t=await O();t&&(e.player1=t.name,e.player1Id=t.id);const n=await O("Spieler Blau","",{id:e.player1Id,name:e.player1});n&&(e.player2=n.name,e.player2Id=n.id)}else{const t=await promptModal("Name Spieler 1 (Rot):",e.player1);t!==null&&(e.player1=t.trim()||"Spieler 1");const n=await promptModal("Name Spieler 2 (Blau):",e.player2);n!==null&&(e.player2=n.trim()||"Spieler 2")}g(),j()}}function pt(){e.locked||e.phase==="break"&&(T(),[e.player1,e.player2]=[e.player2,e.player1],[e.player1Id,e.player2Id]=[e.player2Id??null,e.player1Id??null],[e.s1,e.s2]=[e.s2,e.s1],[e.run1,e.run2]=[e.run2,e.run1],[e.high1,e.high2]=[e.high2,e.high1],[e.inn1,e.inn2]=[e.inn2,e.inn1],[e.consec1,e.consec2]=[e.consec2,e.consec1],(e.log||[]).length?(e.turn=e.turn===1?2:1,e.breaker=e.breaker===1?2:1):(e.turn=1,e.breaker=1),(e.log||[]).forEach(t=>{(t.t==="inn"||t.t==="rack"&&t.p)&&(t.p=t.p===1?2:1)}),g())}function ft(){const t=document.getElementById("balls");t.innerHTML="";for(let n=1;n<=15;n++){if(n>e.ballsLeft)continue;const r=document.createElement("button");r.type="button",r.innerHTML=`<span class="num">${n}</span>`,r.className="ball b"+n+(n>=9?" stripe":""),r.disabled=e.locked,r.onclick=()=>me(n),t.appendChild(r)}e.locked?t.classList.add("locked-ui"):t.classList.remove("locked-ui")}function ne(t){return t<=0?{text:"",warn:!1}:t===1?{text:"1 Foul ( / )",warn:!1}:t===2?{text:"⚠ 2 Fouls – nächstes −15",warn:!0}:{text:"",warn:!1}}function j(){document.getElementById("p1").textContent=e.player1,document.getElementById("p2").textContent=e.player2,document.getElementById("s1").textContent=e.s1,document.getElementById("s2").textContent=e.s2,document.getElementById("run1").textContent=e.run1,document.getElementById("run2").textContent=e.run2,document.getElementById("high1").textContent=e.high1,document.getElementById("high2").textContent=e.high2,document.getElementById("inn1").textContent=e.inn1,document.getElementById("inn2").textContent=e.inn2,document.getElementById("avg1").textContent=(e.s1/(e.inn1||1)).toFixed(1),document.getElementById("avg2").textContent=(e.s2/(e.inn2||1)).toFixed(1),document.getElementById("targetScore").textContent=e.target,document.getElementById("targetInn").textContent=e.targetInn;const t=ne(e.consec1),n=ne(e.consec2),r=document.getElementById("fouls1"),l=document.getElementById("fouls2");r.textContent=t.text,r.classList.toggle("warn",t.warn),l.textContent=n.text,l.classList.toggle("warn",n.warn);const i=document.getElementById("hl1"),o=document.getElementById("hl2");i.classList.toggle("active",e.turn===1),o.classList.toggle("active",e.turn===2);const a=!e.locked&&e.phase==="break",s=e.turn===1?e.player1:e.player2,c=document.getElementById("status");e.locked?(c.textContent=e.winnerText||"",c.style.color=""):a?(c.textContent="🎱 Eröffnungsstoß: "+s,c.style.color=e.turn===1?"#cc0000":"#1133cc"):(c.textContent="🎱 An der Aufnahme: "+s,c.style.color=e.turn===1?"#cc0000":"#1133cc"),c.classList.toggle("game-over",!!e.locked),document.getElementById("foulBtn").style.display="inline-block",document.getElementById("breakFoulBtn").style.display=a?"inline-block":"none",["editP1Btn","editP2Btn","targetBtn","missBtn","foulBtn","safetyBtn","breakFoulBtn"].forEach(p=>{const u=document.getElementById(p);u&&(u.disabled=e.locked)});const d=document.getElementById("swapBtn");d&&(d.disabled=e.locked||e.phase!=="break"),ft(),U&&we(),ke(),tt()}function he(){U&&ye(),document.getElementById("clock").textContent=new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})}window.hit=me;window.changeName=ct;window.setTarget=dt;window.missTurn=lt;window.foul=it;window.safety=ot;window.breakFoul=at;window.openLog=ht;window.openHelp=yt;window.undo=st;window.newGame=ut;window.swap=pt;window.toggleMiniLog=mt;let U=!1;function W(t){return String(t??"").replace(/[&<>"]/g,n=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[n])}function re(t,n,r,l,i,o){const a=(n/(l||1)).toFixed(1);return'<div class="ls-p"><div class="ls-name" style="color:'+i+'">'+W(t)+'</div><div class="ls-score" style="color:'+i+'">'+n+'</div><div class="ls-stats">HS '+r+" · Aufn. "+l+" · Ø "+a+'</div><div class="ls-attable">'+(o?"● am Tisch":"&nbsp;")+"</div></div>"}function P(){e.startedAt||(e.startedAt=Date.now())}function gt(){if(!e.startedAt)return"Spielzeit —";const t=Math.max(0,Math.floor(((e.endedAt||Date.now())-e.startedAt)/6e4));return"Spielzeit "+Math.floor(t/60)+":"+String(t%60).padStart(2,"0")+" h"}function ye(){const t=document.getElementById("log-time");t&&(t.textContent=gt())}function be(){const t=[],n=i=>t[i]||(t[i]={n:i,p1:null,p2:null,live1:null,live2:null});let r=0,l=0;if((e.log||[]).forEach(i=>{i.t!=="rack"&&(i.p===1?n(++r).p1=i:n(++l).p2=i)}),!e.locked){const i=e.turn,o=i===1?e.run1:e.run2,a=e.rackPts||[],s={segs:a.concat(o-a.reduce((d,p)=>d+p,0)),total:i===1?e.s1:e.s2},c=(i===1?r:l)+1;i===1?n(c).live1=s:n(c).live2=s}return t}function le(t,n){if(t){const r=t.kind==="foul"||t.kind==="foul3"||t.kind==="break",l=t.kind==="foul3"?"pz-f3":r?"pz-f":t.kind==="safety"?"pz-s":t.kind==="run"?"pz-v":"",i=t.kind==="safety"?"S":t.kind==="run"?"V":t.mark||"",o=t.segs&&t.segs.length>1?t.segs.join("/"):t.pkt;return'<td class="'+l+'">'+(i?i+" ":"")+o+"</td>"}return n?'<td class="ml-live">▶ '+(n.segs&&n.segs.length>1?n.segs.join("/"):n.segs[0])+"</td>":"<td></td>"}function ke(){const t=document.getElementById("mini-log");if(!t||t.hidden)return;const n=be().filter(Boolean),r=n.slice(-3),l=e.targetInn>0?e.targetInn:0;let i=(n.length?n[n.length-1].n:0)+1;for(let a=0;a<2&&!(l&&i>l);a++,i++)r.push({n:i,kommt:!0});let o="";r.forEach(a=>{const s=l&&a.n===l?' class="ml-schluss"':l&&a.n===l-1?' class="ml-vorletzte"':"",c='<td class="'+(a.kommt?"ml-kommt":"ml-no")+'">'+a.n+"</td>";o+="<tr"+s+">"+c+le(a.p1,a.live1)+le(a.p2,a.live2)+"</tr>"}),t.innerHTML="<thead><tr><th>Aufn.</th><th>Sp. 1</th><th>Sp. 2</th></tr></thead><tbody>"+o+"</tbody>"}let z=!1;function mt(){z=!z,document.getElementById("mini-log").hidden=!z,document.getElementById("colon").classList.toggle("mini-offen",z),document.getElementById("miniLogBtn").textContent=z?"✕":"☰",ke()}function we(){const t=document.getElementById("log-summary");t.innerHTML=re(e.player1,e.s1,e.high1,e.inn1,"#cc0000",!e.locked&&e.turn===1)+'<div class="ls-target"><div style="font-size:15px;font-weight:bold;">Ziel: '+e.target+" Pkt.</div>"+(e.targetInn>0?'<div style="font-size:15px;font-weight:bold;">'+e.targetInn+" Aufn.</div>":"")+"</div>"+re(e.player2,e.s2,e.high2,e.inn2,"#1133cc",!e.locked&&e.turn===2);const n=be(),r=(i,o,a,s)=>{const c=a?"pz-bl":"";if(i){const d=i.kind==="foul"||i.kind==="foul3"||i.kind==="break",p=i.kind==="foul3"?"pz-f3":i.kind==="foul"||i.kind==="break"?"pz-f":"",u=d?p:"",x=i.pkt===s&&i.pkt>0?" pz-hs":"",_=i.segs&&i.segs.length>1?i.segs.join("/"):i.pkt;let S=i.mark||"",k=p;return i.kind==="safety"?(S="S",k="pz-s"):i.kind==="run"&&(S="V",k="pz-v"),'<td class="'+(c+" "+k).trim()+'">'+S+'</td><td class="'+(u+x).trim()+'">'+_+'</td><td class="pz-tot">'+i.total+"</td>"}if(o){const d=o.segs&&o.segs.length>1?o.segs.join("/"):o.segs[0];return'<td class="'+(c+" pz-livecell pz-liveno").trim()+'">▶</td><td class="pz-livecell">'+d+'</td><td class="pz-tot pz-livecell">'+o.total+"</td>"}return'<td class="'+c+'"></td><td></td><td></td>'};let l="";for(let i=1;i<n.length;i++){const o=n[i];if(!o)continue;const a=!!(o.live1||o.live2),s=a&&!o.p1&&!o.p2,c=o.p1&&o.p1.kind==="foul3"||o.p2&&o.p2.kind==="foul3",d=s?' class="pz-live"':c?' class="pz-3frow"':"",p=a&&!s?"pz-no pz-liveno":"pz-no",u=""+i;l+="<tr"+d+'><td class="'+p+'">'+u+"</td>"+r(o.p1,o.live1,!1,e.high1)+r(o.p2,o.live2,!0,e.high2)+"</tr>"}l||(l='<tr><td colspan="7" class="pz-empty">Noch keine Aufnahmen.</td></tr>'),document.getElementById("log-table").innerHTML='<colgroup><col style="width:9%"><col style="width:8%"><col style="width:14%"><col style="width:15%"><col style="width:8%"><col style="width:14%"><col style="width:15%"></colgroup><thead><tr><th class="pz-corner">Aufn.</th><th colspan="3" class="pz-h1">'+W(e.player1)+' (Rot)</th><th colspan="3" class="pz-h2 pz-bl">'+W(e.player2)+' (Blau)</th></tr><tr class="pz-sub"><th>Nr.</th><th>F</th><th>Pkt.</th><th>Gesamt</th><th class="pz-bl">F</th><th>Pkt.</th><th>Gesamt</th></tr></thead><tbody>'+l+"</tbody>",ye()}function ht(){U=!0;const t=document.getElementById("log-open-page");t&&(t.href="14.1_Log.html?table="+encodeURIComponent(f)),we(),document.getElementById("log-overlay").style.display="flex"}function ve(){U=!1,document.getElementById("log-overlay").style.display="none"}document.getElementById("log-close").addEventListener("click",ve);document.getElementById("log-print").addEventListener("click",()=>window.print());try{We({btnId:"log-share",summaryId:"log-summary",tableId:"log-table",legendId:"log-legend",titel:()=>"14.1 Protokoll - Tisch "+f,dateiBasis:()=>"14.1-Protokoll_Tisch"+f+"_"+e.player1+"-vs-"+e.player2})}catch(t){console.error("Teilen-Knopf nicht verfuegbar:",t)}document.getElementById("log-overlay").addEventListener("click",t=>{t.target.id==="log-overlay"&&ve()});function yt(){document.getElementById("help-overlay").style.display="flex"}function Ee(){document.getElementById("help-overlay").style.display="none"}document.getElementById("help-close").addEventListener("click",Ee);document.getElementById("help-overlay").addEventListener("click",t=>{t.target.id==="help-overlay"&&Ee()});function B(){return{player1:"Spieler 1",player2:"Spieler 2",player1Id:null,player2Id:null,s1:0,s2:0,run1:0,run2:0,rackPts:[],high1:0,high2:0,inn1:0,inn2:0,consec1:0,consec2:0,target:60,targetInn:20,turn:1,ballsLeft:15,rackNo:1,pendingRebuilds:0,phase:"break",breaker:1,locked:!1,winnerText:"",log:[],gameType:"14.1",tournamentMatchId:null,startedAt:null}}function C(){const t=!!(e&&e.tournamentMatchId);if(t&&qe(m,e.tournamentMatchId,D)){E||(E=!0,alert(`Das Ergebnis dieses Spiels steht schon in CueDesk.
+
+Der Tisch ist wieder frei.`)),b(h,null).catch(()=>{});return}const n=Ce(ee(),t,v,pe().length),r=document.getElementById("picker141");r&&(r.style.display=n?"flex":"none",n&&(Ye(),Qe()));const l=t&&e.locked,i=document.getElementById("confirm-141");i&&(i.style.display=l?"block":"none",l&&(document.getElementById("confirm-141-text").textContent=Re(e.player1,e.player2,e.s1,e.s2)));const o=document.getElementById("btn-back-141");o&&(o.style.display=ee()&&!t?"inline-block":"none")}function bt(){const t=Y;if(D){C();return}if(t)if(t.gameType==="pool"&&t.tournamentMatchId){q(`An Tisch ${f} läuft gerade ein Turnierspiel. Bitte einen freien Tisch wählen.`,!1);return}else if(t.gameType==="pool"){if(w){F++;const n=F<2;q(n?`Tisch ${f} wurde an einem anderen Gerät auf 8/9/10-Ball umgestellt. Damit sich die Geräte nicht gegenseitig überschreiben, ist dieses Board pausiert.`:`Tisch ${f} wird an mehreren Geräten gesteuert. Bitte nur an EINEM Tablet weiterspielen und den Tisch dort über die Startseite neu öffnen.`,n);return}e=B(),e.player1=t.player1||"Spieler 1",e.player2=t.player2||"Spieler 2",w=!0,g()}else if(et(t)){if(w){F++;const n=F<2;q(n?`Tisch ${f} wird gerade an einem anderen Gerät gesteuert. Damit sich die Geräte nicht gegenseitig überschreiben, ist dieses Board pausiert.`:`Tisch ${f} wird an mehreren Geräten gesteuert. Bitte nur an EINEM Tablet weiterspielen und den Tisch dort über die Startseite neu öffnen.`,n)}else q(`Tisch ${f} wird bereits an einem anderen Gerät gesteuert. Hier nur übernehmen, wenn dieses Tablet den Tisch wirklich bedienen soll.`,!0);return}else w=!0,e=Object.assign(B(),t),Ae(t)&&(v=!0),Array.isArray(e.log)||(e.log=[]),e.gameType="14.1";else e=B(),w=!0,g();j(),C()}ae(h,t=>{Y=t.val(),bt()});ae($(H,"tournament/active"),t=>{m=t.val(),C()});document.getElementById("btn-confirm-141").addEventListener("click",()=>{kt()});async function kt(){try{if(!e.tournamentMatchId)return;if(!y()){alert(`Dieses Tablet ist gerade nicht mit CueDesk verbunden.
+
+Bitte neu koppeln oder das Ergebnis `+e.s1+":"+e.s2+" in CueDesk eintragen.");return}E=!0;const t=await ce(e.tournamentMatchId,e,{abgebrochen:!1});if(!t.ok){if(E=!1,alert("Speichern fehlgeschlagen: "+t.fehler+`
+
+Das Ergebnis `+e.s1+":"+e.s2+" bitte in CueDesk eintragen."+(t.endgueltig?" Der Tisch wird freigegeben.":"")),t.endgueltig){v=!1;try{await b(h,null)}catch{}}return}v=!1;try{await b(h,null)}catch(n){alert("Fehler: "+n.message)}}catch(t){alert("Bestätigen fehlgeschlagen: "+(t&&t.message||t)+`
+
+Das Ergebnis `+e.s1+":"+e.s2+" bitte in CueDesk eintragen.")}}document.getElementById("btn-frei-141").addEventListener("click",()=>{v=!0,e.frei=!0,g(),C()});document.getElementById("btn-back-141").addEventListener("click",async()=>{D=!0;try{await b(h,null)}catch{}window.location.href="index_pool.html?table="+f});document.getElementById("home-btn").addEventListener("click",()=>{window.location.href=J()});function q(t,n=!0){D=!0,document.getElementById("yield-text").textContent=t;const r=document.getElementById("yield-reclaim");r&&(r.style.display=n?"inline-block":"none"),document.getElementById("yield-overlay").style.display="flex"}async function wt(){if(!await confirmModal(`Tisch ${f} hier übernehmen? Das andere Gerät verliert die Kontrolle.`))return;document.getElementById("yield-overlay").style.display="none",D=!1,w=!0;const t=Y||{};t.gameType==="14.1"?(e=Object.assign(B(),t),Array.isArray(e.log)||(e.log=[]),e.gameType="14.1"):(e=B(),e.player1=t.player1||"Spieler 1",e.player2=t.player2||"Spieler 2"),M=[],g()}document.getElementById("yield-home").addEventListener("click",()=>{window.location.href=J()});document.getElementById("yield-reclaim").addEventListener("click",wt);setInterval(he,1e3);he();He(J(),14400*1e3);</script>
 </head>
 
 <body>
@@ -577,7 +615,7 @@
 
   <div id="header">
     <div class="hdr-left">
-      <button id="home-btn" type="button" title="Zur Startseite" onclick="window.location.href='index.html'">🏠</button>
+      <button id="home-btn" type="button" title="Zur Startseite">🏠</button>
       <button id="helpBtn" class="hdr-btn" type="button" onclick="openHelp()">❓ Hilfe</button>
       <button id="fsBtn" class="hdr-btn" type="button" title="Vollbild">⤢ Vollbild</button>
     </div>
@@ -646,6 +684,7 @@
   <div id="bottom-bar">
     <div class="bb-left">
       <button id="undoBtn" type="button" onclick="undo()">↩️ Undo</button>
+      <button id="btn-back-141" type="button">↩ Zurück zum Turnier</button>
     </div>
     <div id="turn-actions">
       <button id="missBtn" type="button" class="act-miss" onclick="missTurn()">➜ Verschossen</button>
@@ -660,12 +699,23 @@
 
 </div>
 
+<!-- Nachgeben-Overlay: anderes Geraet hat den Tisch uebernommen / Tisch belegt -->
+<div id="yield-overlay">
+  <h2>🔁 Tisch wird woanders gesteuert</h2>
+  <p id="yield-text"></p>
+  <div class="row">
+    <button id="yield-home" type="button">🏠 Zur Startseite</button>
+    <button id="yield-reclaim" type="button">Hier übernehmen</button>
+  </div>
+</div>
+
 <!-- Protokoll-Overlay (Protokollzettel) -->
 <div id="log-overlay">
   <div id="log-card">
     <div id="log-head">
       <div id="log-title">📋 Protokoll</div>
       <div id="log-head-actions">
+        <a id="log-open-page" href="#" target="_blank" rel="noopener">Als Seite öffnen ↗</a>
         <button id="log-print" type="button">🖨 Drucken</button>
         <button id="log-share" type="button">📤 Senden</button>
         <button id="log-close" type="button" aria-label="Schließen">✕</button>
@@ -828,859 +878,25 @@
         <li><b>Zielpunkte</b> – Mit dem Ball, der das Ziel erreicht, ist das Spiel aus. Werden mehr Kugeln angetippt als bis dahin nötig, zählt das Board nur bis zum Ziel – bei Ziel 100 und 99 Punkten also genau <b>einen</b> Ball, auch wenn die 8 angetippt wurde. So bleibt auch der Ø richtig.</li>
         <li><b>☰ Letzte Aufnahmen</b> – Der kleine Knopf über dem Doppelpunkt blendet an dessen Stelle eine kompakte Tabelle ein: die letzten drei Aufnahmen (die laufende zählt mit) und darunter die nächsten, noch leeren. <b>Gelb</b> und <b>Rot</b> markieren die beiden <b>letzten Aufnahmen des Matches</b> – sie erscheinen also erst, wenn das Aufnahmen-Limit in Sicht kommt.</li>
       </ul>
-
-      <div class="hint">Diese Demo speichert den Spielstand lokal in deinem Browser (kein Server, keine Anmeldung).</div>
     </div>
   </div>
 </div>
 
-<script>
-  /* =====================================================================
-     14.1 Scoreboard – STANDALONE (ohne Firebase / Turnier)
-     Spielstand wird lokal im Browser (localStorage) gespeichert.
-     ===================================================================== */
+<!-- Turnierspiel zu Ende: Ergebnis in CueDesk uebernehmen -->
+<div id="confirm-141">
+  <div id="confirm-141-text"></div>
+  <button id="btn-confirm-141" type="button">✅ Ergebnis bestätigen</button>
+  <span class="hinweis">Falsch gezählt? Mit ↩️ Undo korrigieren.</span>
+</div>
+
+<!-- Turnier-Picker: 14.1-Partien des laufenden Spieltags -->
+<div id="picker141">
+  <div id="picker141-box">
+    <h2>🎯 14.1-Spiel auswählen — Tisch <span id="picker141-table"></span></h2>
+    <div id="picker141-list"></div>
+    <button id="btn-frei-141" type="button">🎮 Frei spielen (ohne Turnier)</button>
+  </div>
+</div>
 
-  const LS_KEY = "billard141_standalone";
-
-  let logOpen = false;
-  let history = [];   // fuer Undo
-
-  function freshState() {
-    return { player1:"Spieler 1", player2:"Spieler 2", s1:0, s2:0, run1:0, run2:0, rackPts:[],
-             high1:0, high2:0, inn1:0, inn2:0, consec1:0, consec2:0, target:60, targetInn:20, turn:1,
-             ballsLeft:15, rackNo:1, pendingRebuilds:0, phase:"break", breaker:1,
-             locked:false, winnerText:"", log:[] };
-  }
-
-  let state = freshState();
-
-  function pushHistory() { history.push(JSON.stringify(state)); }
-
-  // Speichern: lokal im Browser
-  function save() {
-    try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {}
-  }
-
-  function load() {
-    try {
-      const raw = localStorage.getItem(LS_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed && typeof parsed === "object") {
-          state = Object.assign(freshState(), parsed);
-          if (!Array.isArray(state.log)) state.log = [];
-        }
-      }
-    } catch (e) {}
-  }
-
-  /* ===========================
-     Spielende pruefen
-     =========================== */
-  function checkEnd() {
-    if (state.locked) return;
-    const pointsReached = state.s1 >= state.target || state.s2 >= state.target;
-    // Aufnahmen-Limit: BEIDE Spieler spielen ihre Aufnahmen zu Ende (nicht wer die Zahl zuerst erreicht).
-    const inningsReached = state.targetInn > 0 && state.inn1 >= state.targetInn && state.inn2 >= state.targetInn;
-    if (!pointsReached && !inningsReached) return;   // weder Punkteziel noch Aufnahmen-Limit erreicht
-
-    // Beim Punkteziel ist die entscheidende Aufnahme noch OFFEN und wuerde spurlos
-    // verschwinden: buildProtocol() zeigt die Live-Zeile nur solange nicht gesperrt ist.
-    // Sie wird daher hier abgeschlossen - damit taucht sie im Protokoll auf und zaehlt
-    // bei "Aufn." und der Hoechstserie mit (beides macht logEntry()).
-    // Punkte steigen nur in hit(), pointsReached wird also genau dann neu wahr, wenn eine
-    // Aufnahme offen ist. inningsReached wird dagegen erst nach einem inn++ wahr, die
-    // Aufnahme ist dort bereits geschlossen - eine Zeile mit 0 Punkten waere falsch.
-    if (pointsReached) {
-      const pEnd = state.turn;
-      const runEnd = (pEnd === 1 ? state.run1 : state.run2);
-      logEntry(pEnd, runEnd, 0, "", "end");            // leere F-Spalte
-      flushRebuilds();
-      if (pEnd === 1) state.inn1++; else state.inn2++; // kein nextTurnInternal: kein Zugwechsel
-      state.run1 = 0; state.run2 = 0; state.rackPts = [];
-    }
-
-    state.locked = true;
-    state.endedAt = Date.now();   // Spielzeit einfrieren
-    // Sieger = mehr Punkte; bei Erreichen des Aufnahmen-Limits ist auch Unentschieden moeglich.
-    if (state.s1 > state.s2) {
-      state.winnerText = "Spiel beendet – Gewinner: " + state.player1;
-    } else if (state.s2 > state.s1) {
-      state.winnerText = "Spiel beendet – Gewinner: " + state.player2;
-    } else {
-      state.winnerText = "Spiel beendet – Unentschieden";
-    }
-    save();
-    render();
-    alert(state.winnerText);
-  }
-
-  /* ===========================
-     14.1 Regel-Engine (4.1–4.12)
-     =========================== */
-  function logEntry(p, balls, foulPts, mark, kind) {
-    const pkt = balls - foulPts;                       // Aufnahmeresultat = Baelle - Foulpunkte
-    const total = (p === 1 ? state.s1 : state.s2);
-    if (p === 1) { if (pkt > state.high1) state.high1 = pkt; }
-    else         { if (pkt > state.high2) state.high2 = pkt; }
-    const rp = state.rackPts || [];
-    const segs = rp.concat(balls - rp.reduce((a, b) => a + b, 0));   // Punkte je Rack (letztes = offener Rest)
-    state.log.push({ t: "inn", p: p, balls: balls, pkt: pkt, total: total, mark: mark || "", kind: kind || "run", segs: segs });
-  }
-
-  function flushRebuilds() {
-    while (state.pendingRebuilds > 0) {
-      state.rackNo++;
-      state.log.push({ t: "rack", rackNo: state.rackNo, p: state.turn });
-      state.pendingRebuilds--;
-    }
-  }
-
-  function respotRun(p) {
-    const run = (p === 1 ? state.run1 : state.run2);
-    if (run > 0) {
-      if (p === 1) state.s1 -= run; else state.s2 -= run;
-      state.ballsLeft = Math.min(15, state.ballsLeft + run);
-    }
-  }
-
-  function rebuildFull() {
-    state.ballsLeft = 15;
-    state.pendingRebuilds++;
-  }
-
-  function nextTurnInternal() {
-    if (state.turn === 1) state.inn1++; else state.inn2++;
-    state.run1 = 0;
-    state.run2 = 0;
-    state.rackPts = [];
-    state.turn = (state.turn === 1 ? 2 : 1);
-  }
-
-  // Klick auf Kugel n = "es liegen noch n Kugeln" -> (ballsLeft - n) Punkte fuer die Aufnahme (4.7).
-  function hit(n) {
-    if (state.locked) return;
-    // Mit dem Ball, der das Ziel erreicht, ist das Spiel aus - was der Schreiber darueber
-    // hinaus antippt, zaehlt nicht (sonst stimmt auch der Durchschnitt nicht mehr).
-    const ziel = state.target > 0 ? state.target : Infinity;
-    const rest = ziel - (state.turn === 1 ? state.s1 : state.s2);
-    const gained = Math.min(state.ballsLeft - n, rest);
-    if (gained <= 0) return;               // oberste Kugel angeklickt = nichts versenkt
-    pushHistory();
-    markStart();
-    if (state.phase === "break") state.phase = "play";     // gefallene Kugel beendet die Eroeffnungsphase
-    if (state.turn === 1) { state.s1 += gained; state.run1 += gained; state.consec1 = 0; }
-    else                  { state.s2 += gained; state.run2 += gained; state.consec2 = 0; }
-    // folgt den GEZAEHLTEN Baellen: im Normalfall gleich n, bei einer Kappung mehr -
-    // dadurch entfaellt der Rack-Neuaufbau unten von selbst (Spiel ist ohnehin aus).
-    state.ballsLeft -= gained;   // legal versenkte Kugel bricht die Foulserie (4.11) -> Warnung weg
-    if (state.ballsLeft <= 1) {            // nur der Break-Ball liegt noch -> die 14 wieder aufbauen
-      state.ballsLeft = 15;
-      state.pendingRebuilds++;
-      if (!state.rackPts) state.rackPts = [];
-      const runNow = (state.turn === 1 ? state.run1 : state.run2);
-      state.rackPts.push(runNow - state.rackPts.reduce((a, b) => a + b, 0));   // abgeraeumtes Rack schliessen (Slash-Segment)
-    }
-    save();
-    render();
-  }
-
-  // Aufnahme regelgerecht beendet (verschossen) – kein Foul.
-  function missTurn() {
-    if (state.locked) return;
-    pushHistory();
-    markStart();
-    const p = state.turn;
-    const run = (p === 1 ? state.run1 : state.run2);
-    logEntry(p, run, 0, "", "run");
-    if (p === 1) state.consec1 = 0; else state.consec2 = 0;
-    flushRebuilds();
-    nextTurnInternal();
-    state.phase = "play";
-    save();
-    render();
-  }
-
-  // Standardfoul (4.9): -1, Aufnahmewechsel; Drei-Foul-Regel (4.11) beachtet.
-  async function foul() {
-    if (state.locked) return;
-    pushHistory();
-    markStart();
-    const p = state.turn;
-    const run = (p === 1 ? state.run1 : state.run2);
-    const hadLegalBall = run > 0;
-    if (p === 1) state.s1 -= 1; else state.s2 -= 1;
-    let consec;
-    if (p === 1) { state.consec1 = hadLegalBall ? 1 : state.consec1 + 1; consec = state.consec1; }
-    else         { state.consec2 = hadLegalBall ? 1 : state.consec2 + 1; consec = state.consec2; }
-
-    if (consec >= 3) {
-      // 4.11: zusaetzlich -15, Fouls geloescht, alle 15 neu, Verursacher stoesst neu an.
-      if (p === 1) { state.s1 -= 15; state.consec1 = 0; } else { state.s2 -= 15; state.consec2 = 0; }
-      logEntry(p, run, 16, "3F", "foul3");
-      rebuildFull();
-      flushRebuilds();
-      if (p === 1) state.inn1++; else state.inn2++;
-      state.run1 = 0; state.run2 = 0; state.rackPts = [];
-      state.turn = p; state.phase = "break"; state.breaker = p;
-    } else {
-      logEntry(p, run, 1, consec === 1 ? "/" : "//", "foul");
-      flushRebuilds();
-      nextTurnInternal();
-      state.phase = "play";   // Gegner uebernimmt den Tisch, kein neuer Anstoss
-    }
-    save();
-    render();
-  }
-
-  // Sicherheit (4.5/4.6): vor der Sicherheit legal versenkte Baelle zaehlen normal; die
-  // Sicherheit beendet nur die Aufnahme (kein zusaetzlicher Punkt) und wechselt die Aufnahme.
-  // Die angesagte Sicherheit ist ein REGELGERECHTER Stoss und bricht daher die Foulserie
-  // (4.11 zaehlt nur Fouls "ohne dazwischenliegenden regelgerechten Stoss") - genau wie
-  // missTurn(). Wer diesen Knopf drueckt, sagt dem Board, dass der Stoss gueltig war;
-  // ein ungueltiger Versuch waere "Foul". Entscheidend fuer die reine Sicherheit OHNE
-  // versenkte Kugel - sonst hat hit() den Zaehler ohnehin schon geloescht.
-  function safety() {
-    if (state.locked) return;
-    pushHistory();
-    markStart();
-    const p = state.turn;
-    const run = (p === 1 ? state.run1 : state.run2);
-    logEntry(p, run, 0, "", "safety");
-    if (p === 1) state.consec1 = 0; else state.consec2 = 0;   // regelgerechter Stoss bricht die Foulserie (4.11)
-    flushRebuilds();
-    nextTurnInternal();
-    state.phase = "play";
-    save();
-    render();
-  }
-
-  // Eroeffnungsfoul (4.3/4.10): -2; Gegner uebernimmt oder laesst wiederholen.
-  async function breakFoul() {
-    if (state.locked) return;
-    pushHistory();
-    markStart();
-    const p = state.turn;
-    respotRun(p);
-    if (p === 1) state.s1 -= 2; else state.s2 -= 2;
-    logEntry(p, 0, 2, "-2", "break");
-    const takeOver = await confirmModal(
-      "Eröffnungsfoul (−2).\n\nOK = Gegner übernimmt den Tisch.\nAbbrechen = Eröffnungsstoß wird wiederholt.");
-    if (takeOver) {
-      flushRebuilds();
-      nextTurnInternal();
-      state.phase = "play";
-    } else {
-      flushRebuilds();
-      if (p === 1) state.inn1++; else state.inn2++;
-      state.run1 = 0; state.run2 = 0; state.rackPts = [];
-      // Wiederholung durch denselben Spieler, der das Eroeffnungsfoul begangen hat
-      state.turn = p; state.breaker = p; state.phase = "break";
-    }
-    save();
-    render();
-  }
-
-  function undo() {
-    if (history.length === 0) return;
-    state = JSON.parse(history.pop());
-    save();
-    render();
-  }
-
-  async function changeName(player) {
-    if (state.locked) return;
-    const name = (await promptModal("Neuer Name:") || '').trim();
-    if (!name) return;
-    if (player === 1) state.player1 = name; else state.player2 = name;
-    save();
-    render();
-  }
-
-  async function setTarget() {
-    if (state.locked) return;
-    const t = await promptModal("Zielpunkte (max. 4-stellig):", state.target, { maxLength: 4, numeric: true });
-    if (t === null) return;
-    const i = await promptModal("Aufnahmen-Limit (max. 3-stellig):", state.targetInn, { maxLength: 3, numeric: true });
-    if (i === null) return;
-    const parsedT = parseInt(t, 10);
-    const parsedI = parseInt(i, 10);
-    if (!isNaN(parsedT) && parsedT > 0) state.target = parsedT;
-    if (!isNaN(parsedI) && parsedI > 0) state.targetInn = parsedI;
-    save();
-    render();
-  }
-
-  async function newGame() {
-    if (!await confirmModal("Neues Match starten? Alle aktuellen Punkte werden gelöscht!")) return;
-
-    state.s1 = 0; state.s2 = 0;
-    state.run1 = 0; state.run2 = 0; state.rackPts = [];
-    state.high1 = 0; state.high2 = 0;
-    state.inn1 = 0; state.inn2 = 0;
-    state.consec1 = 0; state.consec2 = 0;
-    state.turn = 1;
-    state.ballsLeft = 15;
-    state.rackNo = 1;
-    state.pendingRebuilds = 0;
-    state.phase = "break";    // neues Match beginnt mit Eröffnungsstoß (immer Rot/links)
-    state.breaker = 1;
-    state.log = [];
-    state.locked = false;
-    state.winnerText = "";
-    state.startedAt = null;
-    state.endedAt = null;
-    history = [];
-
-    if (await confirmModal("Spielernamen ändern?")) {
-      // Leeres Feld und Abbrechen sauber trennen: promptModal liefert bei Abbruch null,
-      // bei OK immer einen String. Geleertes Feld -> Vorgabe statt alter Name.
-      const n1 = await promptModal("Name Spieler 1 (Rot):", state.player1);
-      if (n1 !== null) state.player1 = n1.trim() || "Spieler 1";
-      const n2 = await promptModal("Name Spieler 2 (Blau):", state.player2);
-      if (n2 !== null) state.player2 = n2.trim() || "Spieler 2";
-    }
-
-    save();
-    render();
-  }
-
-  function swap() {
-    if (state.locked) return;
-    if (state.phase !== "break") return;   // nur in der Anstossphase; Knopf ist sonst gesperrt
-    pushHistory();
-
-    [state.player1, state.player2] = [state.player2, state.player1];
-    [state.s1, state.s2] = [state.s2, state.s1];
-    [state.run1, state.run2] = [state.run2, state.run1];
-    [state.high1, state.high2] = [state.high2, state.high1];
-    [state.inn1, state.inn2] = [state.inn2, state.inn1];
-    [state.consec1, state.consec2] = [state.consec2, state.consec1];
-    if (!(state.log || []).length) {
-      // Spielbeginn (noch keine Aufnahme protokolliert): der Seitenwechsel waehlt den
-      // Anstoss aus - wer danach links steht, stoesst an.
-      state.turn = 1;
-      state.breaker = 1;
-    } else {
-      // Regelbedingte Anstossphase (Drei-Foul-Strafe, wiederholter Eroeffnungsstoss):
-      // der Anstoss gehoert einer bestimmten Person und folgt ihr auf die andere Seite.
-      state.turn = (state.turn === 1 ? 2 : 1);
-      state.breaker = (state.breaker === 1 ? 2 : 1);
-    }
-    (state.log || []).forEach(e => { if (e.t === "inn" || (e.t === "rack" && e.p)) e.p = (e.p === 1 ? 2 : 1); });
-
-    save();
-    render();
-  }
-
-  function drawBalls() {
-    const container = document.getElementById("balls");
-    container.innerHTML = "";
-    for (let i = 1; i <= 15; i++) {
-      if (i > state.ballsLeft) continue;
-      const b = document.createElement("button");
-      b.type = "button";
-      b.innerHTML = `<span class="num">${i}</span>`;
-      b.className = "ball b" + i + (i >= 9 ? " stripe" : "");
-      b.disabled = state.locked;
-      b.onclick = () => hit(i);         // Kugel i = "noch i Kugeln auf dem Tisch"
-      container.appendChild(b);
-    }
-    if (state.locked) container.classList.add("locked-ui");
-    else container.classList.remove("locked-ui");
-  }
-
-  function foulInfo(consec) {
-    if (consec <= 0) return { text: "", warn: false };
-    if (consec === 1) return { text: "1 Foul ( / )", warn: false };
-    if (consec === 2) return { text: "⚠ 2 Fouls – nächstes −15", warn: true };
-    return { text: "", warn: false };
-  }
-
-  function render() {
-    document.getElementById("p1").textContent = state.player1;
-    document.getElementById("p2").textContent = state.player2;
-    document.getElementById("s1").textContent = state.s1;
-    document.getElementById("s2").textContent = state.s2;
-    document.getElementById("run1").textContent = state.run1;
-    document.getElementById("run2").textContent = state.run2;
-    document.getElementById("high1").textContent = state.high1;
-    document.getElementById("high2").textContent = state.high2;
-    document.getElementById("inn1").textContent = state.inn1;
-    document.getElementById("inn2").textContent = state.inn2;
-    document.getElementById("avg1").textContent = (state.s1 / (state.inn1 || 1)).toFixed(1);
-    document.getElementById("avg2").textContent = (state.s2 / (state.inn2 || 1)).toFixed(1);
-    document.getElementById("targetScore").textContent = state.target;
-    document.getElementById("targetInn").textContent = state.targetInn;
-
-    const f1 = foulInfo(state.consec1), f2 = foulInfo(state.consec2);
-    const fe1 = document.getElementById("fouls1"), fe2 = document.getElementById("fouls2");
-    fe1.textContent = f1.text; fe1.classList.toggle("warn", f1.warn);
-    fe2.textContent = f2.text; fe2.classList.toggle("warn", f2.warn);
-
-    const hl1 = document.getElementById("hl1");
-    const hl2 = document.getElementById("hl2");
-    hl1.classList.toggle("active", state.turn === 1);
-    hl2.classList.toggle("active", state.turn === 2);
-
-    const inBreak = !state.locked && state.phase === "break";
-    const activeName = (state.turn === 1 ? state.player1 : state.player2);
-    const status = document.getElementById("status");
-    if (state.locked) {
-      status.textContent = state.winnerText || "";
-      status.style.color = "";
-    } else if (inBreak) {
-      status.textContent = "🎱 Eröffnungsstoß: " + activeName;
-      status.style.color = (state.turn === 1 ? "#cc0000" : "#1133cc");
-    } else {
-      status.textContent = "🎱 An der Aufnahme: " + activeName;
-      status.style.color = (state.turn === 1 ? "#cc0000" : "#1133cc");
-    }
-    status.classList.toggle("game-over", !!state.locked);
-
-    document.getElementById("foulBtn").style.display = "inline-block";   // auch beim Anstoss: gueltiger Anstoss + Foul = -1
-    document.getElementById("breakFoulBtn").style.display = inBreak ? "inline-block" : "none";
-
-    ["editP1Btn","editP2Btn","targetBtn","missBtn","foulBtn","safetyBtn","breakFoulBtn"]
-      .forEach(id => { const el = document.getElementById(id); if (el) el.disabled = state.locked; });
-
-
-    // Seitenwechsel nur in der Anstossphase: waehrend der Partie waere er eine reine
-
-    // Spiegelung, und in einer regelbedingten Anstossphase duerfte er den Anstoss
-
-    // nicht neu verteilen.
-
-    const swapEl = document.getElementById("swapBtn");
-
-    if (swapEl) swapEl.disabled = state.locked || state.phase !== "break";
-
-    drawBalls();
-    if (logOpen) buildProtocol();
-    buildMiniLog();   // offenes Mini-Protokoll ebenso
-    checkEnd();
-  }
-
-  function updateClock() {
-    if (logOpen) zeigeSpielzeit();   // sonst stuende die Zeit ohne Zug still
-    document.getElementById("clock").textContent =
-      new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
-  }
-
-  /* ===========================
-     Protokoll-Overlay
-     =========================== */
-  function escapeHtml(s) {
-    return String(s == null ? "" : s).replace(/[&<>"]/g, c =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  }
-
-  function playerSummary(name, score, hs, inn, color, atTable) {
-    const avg = (score / (inn || 1)).toFixed(1);
-    return '<div class="ls-p">' +
-      '<div class="ls-name" style="color:' + color + '">' + escapeHtml(name) + '</div>' +
-      '<div class="ls-score" style="color:' + color + '">' + score + '</div>' +
-      '<div class="ls-stats">HS ' + hs + ' · Aufn. ' + inn + ' · Ø ' + avg + '</div>' +
-      '<div class="ls-attable">' + (atTable ? '● am Tisch' : '&nbsp;') + '</div>' +
-      '</div>';
-  }
-
-  // Spielzeit: startet mit der ERSTEN Aktion (auch Foul, Sicherheit, Verschossen,
-  // Eroeffnungsfoul) - nicht erst beim ersten versenkten Ball. Aufruf jeweils nach
-  // pushHistory(), damit Undo den Zustand davor sauber wiederherstellt.
-  function markStart() { if (!state.startedAt) state.startedAt = Date.now(); }
-
-  // Dauer als "1:23 h". Nach Spielende friert sie ueber state.endedAt ein.
-  function spielzeitText() {
-    if (!state.startedAt) return "Spielzeit —";
-    const min = Math.max(0, Math.floor(((state.endedAt || Date.now()) - state.startedAt) / 60000));
-    return "Spielzeit " + Math.floor(min / 60) + ":" + String(min % 60).padStart(2, "0") + " h";
-  }
-
-  function zeigeSpielzeit() {
-    const el = document.getElementById("log-time");
-    if (el) el.textContent = spielzeitText();
-  }
-  // Aufnahmen paaren: n-te Aufnahme von Rot + n-te von Blau in EINE Zeile "Aufn. n".
-  // Die laufende (noch nicht beendete) Aufnahme kommt in die Zeile des Spielers am Tisch.
-  // Quelle fuer das grosse Protokoll UND das Mini-Protokoll.
-  function pairInnings() {
-    const paired = [];
-    const rowAt = (n) => paired[n] || (paired[n] = { n: n, p1: null, p2: null, live1: null, live2: null });
-    let c1 = 0, c2 = 0;
-    (state.log || []).forEach(e => {
-      if (e.t === "rack") return;   // Rack-Grenze steht als Schraegstrich in der Punkte-Spalte
-      if (e.p === 1) rowAt(++c1).p1 = e; else rowAt(++c2).p2 = e;
-    });
-    if (!state.locked) {
-      const lp = state.turn;
-      const run = (lp === 1 ? state.run1 : state.run2);
-      const rp = state.rackPts || [];
-      const live = { segs: rp.concat(run - rp.reduce((a, b) => a + b, 0)), total: (lp === 1 ? state.s1 : state.s2) };
-      const ln = (lp === 1 ? c1 : c2) + 1;
-      if (lp === 1) rowAt(ln).live1 = live; else rowAt(ln).live2 = live;
-    }
-    return paired;
-  }
-
-  // Eine Spielerzelle des Mini-Protokolls: Zeichen aus der F-Spalte + Punktwert,
-  // Farben wie im grossen Protokoll.
-  function miniZelle(e, live) {
-    if (e) {
-      const isFoul = (e.kind === "foul" || e.kind === "foul3" || e.kind === "break");
-      const cls = (e.kind === "foul3") ? "pz-f3" : isFoul ? "pz-f"
-                : (e.kind === "safety") ? "pz-s" : (e.kind === "run") ? "pz-v" : "";
-      const mark = (e.kind === "safety") ? "S" : (e.kind === "run") ? "V" : (e.mark || "");
-      const val = (e.segs && e.segs.length > 1) ? e.segs.join("/") : e.pkt;
-      return '<td class="' + cls + '">' + (mark ? mark + " " : "") + val + '</td>';
-    }
-    if (live) {
-      const v = (live.segs && live.segs.length > 1) ? live.segs.join("/") : live.segs[0];
-      return '<td class="ml-live">▶ ' + v + '</td>';
-    }
-    return '<td></td>';
-  }
-
-  // Mini-Protokoll: die letzten drei Aufnahmen (die laufende zaehlt mit) und darunter
-  // bis zu zwei leere Vorschauzeilen, begrenzt auf das Aufnahmen-Limit.
-  // Gelb und Rot markieren die beiden LETZTEN Aufnahmen des Matches - sie wandern also
-  // nicht mit, sondern tauchen erst auf, wenn das Ende in Sicht kommt.
-  function buildMiniLog() {
-    const tbl = document.getElementById("mini-log");
-    if (!tbl || tbl.hidden) return;
-    const paired = pairInnings().filter(Boolean);
-    const zeilen = paired.slice(-3);
-    const limit = state.targetInn > 0 ? state.targetInn : 0;
-    let naechste = (paired.length ? paired[paired.length - 1].n : 0) + 1;
-    for (let i = 0; i < 2; i++, naechste++) {
-      if (limit && naechste > limit) break;
-      zeilen.push({ n: naechste, kommt: true });
-    }
-    let rows = "";
-    zeilen.forEach(r => {
-      const cls = (limit && r.n === limit) ? ' class="ml-schluss"'
-                : (limit && r.n === limit - 1) ? ' class="ml-vorletzte"' : "";
-      const no = '<td class="' + (r.kommt ? "ml-kommt" : "ml-no") + '">' + r.n + '</td>';
-      rows += '<tr' + cls + '>' + no + miniZelle(r.p1, r.live1) + miniZelle(r.p2, r.live2) + '</tr>';
-    });
-    tbl.innerHTML = '<thead><tr><th>Aufn.</th><th>Sp. 1</th><th>Sp. 2</th></tr></thead><tbody>' + rows + '</tbody>';
-  }
-
-  let miniOffen = false;
-  function toggleMiniLog() {
-    miniOffen = !miniOffen;
-    document.getElementById("mini-log").hidden = !miniOffen;
-    document.getElementById("colon").classList.toggle("mini-offen", miniOffen);
-    document.getElementById("miniLogBtn").textContent = miniOffen ? "✕" : "☰";
-    buildMiniLog();
-  }
-
-  function buildProtocol() {
-    const sum = document.getElementById("log-summary");
-    sum.innerHTML =
-      playerSummary(state.player1, state.s1, state.high1, state.inn1, "#cc0000", !state.locked && state.turn === 1) +
-      '<div class="ls-target"><div style="font-size:15px;font-weight:bold;">Ziel: ' + state.target + ' Pkt.</div>' +
-        (state.targetInn > 0 ? '<div style="font-size:15px;font-weight:bold;">' + state.targetInn + ' Aufn.</div>' : '') + '</div>' +
-      playerSummary(state.player2, state.s2, state.high2, state.inn2, "#1133cc", !state.locked && state.turn === 2);
-
-    const paired = pairInnings();
-
-    // Baut die drei Zellen (F, Pkt, Gesamt) einer Spielerseite. Pkt zeigt die Slash-Notation
-    // (Punkte je Rack) bei Mehr-Rack-Aufnahmen, sonst die Einzahl.
-    const side = (e, live, isP2, high) => {
-      const bl = isP2 ? "pz-bl" : "";
-      if (e) {
-        const isFoul = (e.kind === "foul" || e.kind === "foul3" || e.kind === "break");
-        const fcls = (e.kind === "foul3") ? "pz-f3" : ((e.kind === "foul" || e.kind === "break") ? "pz-f" : "");
-        const pktcls = isFoul ? fcls : "";
-        const hs = (e.pkt === high && e.pkt > 0) ? " pz-hs" : "";
-        const val = (e.segs && e.segs.length > 1) ? e.segs.join("/") : e.pkt;
-        // F-Spalte: S = Sicherheit (gruen), V = verschossen (blau), sonst das Foul-Zeichen (rot).
-        let markTxt = e.mark || "";
-        let markCls = fcls;
-        if (e.kind === "safety") { markTxt = "S"; markCls = "pz-s"; }
-        else if (e.kind === "run") { markTxt = "V"; markCls = "pz-v"; }
-        return '<td class="' + (bl + " " + markCls).trim() + '">' + markTxt + '</td>' +
-               '<td class="' + (pktcls + hs).trim() + '">' + val + '</td>' +
-               '<td class="pz-tot">' + e.total + '</td>';
-      }
-      if (live) {
-        const lval = (live.segs && live.segs.length > 1) ? live.segs.join("/") : live.segs[0];
-        return '<td class="' + (bl + " pz-livecell pz-liveno").trim() + '">▶</td>' +
-               '<td class="pz-livecell">' + lval + '</td>' +
-               '<td class="pz-tot pz-livecell">' + live.total + '</td>';
-      }
-      return '<td class="' + bl + '"></td><td></td><td></td>';
-    };
-
-    let rows = "";
-    for (let n = 1; n < paired.length; n++) {
-      const r = paired[n];
-      if (!r) continue;
-      const hasLive = !!(r.live1 || r.live2);
-      const pureLive = hasLive && !r.p1 && !r.p2;
-      const foul3 = (r.p1 && r.p1.kind === "foul3") || (r.p2 && r.p2.kind === "foul3");
-      const trcls = pureLive ? ' class="pz-live"' : (foul3 ? ' class="pz-3frow"' : "");
-      const noCls = (hasLive && !pureLive) ? "pz-no pz-liveno" : "pz-no";
-      const noTxt = "" + n;
-      rows += '<tr' + trcls + '><td class="' + noCls + '">' + noTxt + '</td>' +
-        side(r.p1, r.live1, false, state.high1) +
-        side(r.p2, r.live2, true, state.high2) + '</tr>';
-    }
-
-    if (!rows) rows = '<tr><td colspan="7" class="pz-empty">Noch keine Aufnahmen.</td></tr>';
-
-    document.getElementById("log-table").innerHTML =
-      '<colgroup><col style="width:9%"><col style="width:8%"><col style="width:14%"><col style="width:15%">' +
-      '<col style="width:8%"><col style="width:14%"><col style="width:15%"></colgroup>' +
-      '<thead>' +
-        '<tr>' +
-          '<th class="pz-corner">Aufn.</th>' +
-          '<th colspan="3" class="pz-h1">' + escapeHtml(state.player1) + ' (Rot)</th>' +
-          '<th colspan="3" class="pz-h2 pz-bl">' + escapeHtml(state.player2) + ' (Blau)</th>' +
-        '</tr>' +
-        '<tr class="pz-sub">' +
-          '<th>Nr.</th><th>F</th><th>Pkt.</th><th>Gesamt</th>' +
-          '<th class="pz-bl">F</th><th>Pkt.</th><th>Gesamt</th>' +
-        '</tr>' +
-      '</thead><tbody>' + rows + '</tbody>';
-
-    zeigeSpielzeit();
-  }
-
-  function openLog() {
-    logOpen = true;
-    buildProtocol();
-    document.getElementById("log-overlay").style.display = "flex";
-  }
-  function closeLog() {
-    logOpen = false;
-    document.getElementById("log-overlay").style.display = "none";
-  }
-
-  document.getElementById("log-close").addEventListener("click", closeLog);
-  document.getElementById("log-print").addEventListener("click", () => window.print());
-  document.getElementById("log-overlay").addEventListener("click", (e) => {
-    if (e.target.id === "log-overlay") closeLog();
-  });
-
-
-  /* Hilfe-Overlay */
-  function openHelp() { document.getElementById("help-overlay").style.display = "flex"; }
-  function closeHelp() { document.getElementById("help-overlay").style.display = "none"; }
-  document.getElementById("help-close").addEventListener("click", closeHelp);
-  document.getElementById("help-overlay").addEventListener("click", (e) => {
-    if (e.target.id === "help-overlay") closeHelp();
-  });
-
-  // onclick-Handler aus dem HTML global verfuegbar machen
-  window.openHelp = openHelp;
-  window.hit = hit;
-  window.changeName = changeName;
-  window.setTarget = setTarget;
-  window.missTurn = missTurn;
-  window.foul = foul;
-  window.safety = safety;
-  window.breakFoul = breakFoul;
-  window.openLog = openLog;
-  window.undo = undo;
-  window.newGame = newGame;
-  window.swap = swap;
-
-  /* ===========================
-     Start
-     =========================== */
-  load();
-  render();
-  setInterval(updateClock, 1000);
-  updateClock();
-</script>
-
-<script>
-  /* Teilen/Mail steht BEWUSST in einem eigenen Skriptblock. Ein Syntaxfehler
-     schlaegt schon beim Parsen zu, da greift kein try/catch - der ganze Block
-     laeuft dann nie. In einem eigenen Block kann so ein Fehler das Board-Skript
-     nicht mehr erreichen. Zugriff auf "state" aus dem Hauptblock bleibt moeglich
-     (top-level let/const teilen sich die globale Lexik ueber Skriptbloecke). */
-  /* ===========================
-     Protokoll teilen / per Mail senden
-     Gleiche Logik wie js/share-protocol.js, hier inline damit das Bundle
-     self-contained bleibt. Der Inhalt kommt aus dem bereits gerenderten
-     Protokoll, es gibt also keinen zweiten Renderpfad.
-
-     Wird bewusst NICHT hier ausgefuehrt, sondern erst nach load()/render()
-     am Ende des Blocks - und dort gekapselt. Sonst wuerde ein Fehler in
-     diesem Zusatz das ganze Board am Starten hindern.
-     =========================== */
-  function setupShareBtn() {
-    const btn = document.getElementById("log-share");
-    if (!btn) return;
-
-    const SELEKTOR = /(^|[\s,>])(#log-|\.pz-|\.ls-)/;
-    const BASIS_CSS = `
-      body { font-family: Arial, sans-serif; background: #fff; color: #222; margin: 16px; }
-      h1 { font-size: 18px; margin: 0 0 2px; }
-      .kopf-datum { font-size: 12px; color: #666; margin: 0 0 14px; }
-      table { width: 100%; border-collapse: collapse; table-layout: fixed;
-              font-size: 14px; text-align: center; }
-      th, td { padding: 5px 2px; border-bottom: 1px solid #eee; }
-      thead th { background: #f4f4f4; }
-      .fuss { margin-top: 14px; font-size: 11px; color: #888; }
-      @page { size: A4 portrait; margin: 12mm; }
-    `;
-
-    function seitenCss() {
-      const teile = [];
-      for (const sheet of Array.from(document.styleSheets)) {
-        let regeln;
-        try { regeln = sheet.cssRules; } catch (e) { continue; }
-        if (!regeln) continue;
-        for (const r of Array.from(regeln)) {
-          if (r.selectorText && SELEKTOR.test(r.selectorText)) teile.push(r.cssText);
-        }
-      }
-      return teile.join("\n");
-    }
-
-    // Kopfzeile Feld fuer Feld - textContent des ganzen Blocks wuerde Name und
-    // Punktzahl aneinanderkleben ("Spieler 17").
-    function summaryText() {
-      const sum = document.getElementById("log-summary");
-      if (!sum) return "";
-      const zeilen = [];
-      sum.querySelectorAll(".ls-p").forEach(p => {
-        const feld = k => { const e = p.querySelector(k); return e ? e.textContent.trim() : ""; };
-        zeilen.push([feld(".ls-name"), feld(".ls-score"), feld(".ls-stats")].filter(Boolean).join("  "));
-      });
-      const ziel = sum.querySelector(".ls-target");
-      if (ziel) {
-        const z = Array.from(ziel.children).map(e => e.textContent.trim()).filter(Boolean).join(" · ");
-        if (z) zeilen.push(z);
-      }
-      if (!zeilen.length) return sum.textContent.replace(/\s+/g, " ").trim();
-      return zeilen.filter(Boolean).join("\n");
-    }
-
-    // Von den Kopfzeilen nur die untere - die obere hat colspan und wuerde die
-    // Spaltenbreiten verziehen.
-    function alsText() {
-      const zeilen = [];
-      const kopf = summaryText();
-      if (kopf) zeilen.push(kopf, "");
-      const tab = document.getElementById("log-table");
-      if (tab) {
-        const kopfZeile = tab.querySelector("thead tr:last-child");
-        const trs = (kopfZeile ? [kopfZeile] : []).concat(Array.from(tab.querySelectorAll("tbody tr")));
-        const alle = trs.map(tr => Array.from(tr.cells).map(c => c.textContent.trim()));
-        const breite = [];
-        alle.forEach(z => z.forEach((c, i) => { breite[i] = Math.max(breite[i] || 0, c.length); }));
-        alle.forEach(z => zeilen.push(z.map((c, i) => c.padEnd(breite[i])).join("  ").trimEnd()));
-      }
-      return zeilen.join("\n");
-    }
-
-    const dateiSicher = s => String(s || "")
-      .replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue")
-      .replace(/Ä/g, "Ae").replace(/Ö/g, "Oe").replace(/Ü/g, "Ue").replace(/ß/g, "ss")
-      .replace(/[^A-Za-z0-9._-]+/g, "-")
-      .replace(/-+/g, "-").replace(/_+/g, "_")     // sonst doppelter Unterstrich bei leeren Namen
-      .replace(/^[-_]+|[-_]+$/g, "");
-
-    btn.addEventListener("click", () => {
-      const titel = "14.1 Protokoll - " + state.player1 + " vs. " + state.player2;
-      const datum = new Date();
-      const name = dateiSicher("14.1-Protokoll_" + state.player1 + "-vs-" + state.player2)
-                 + "_" + datum.toISOString().slice(0, 10) + ".html";
-      const tab = document.getElementById("log-table");
-      const html =
-        '<!doctype html><html lang="de"><head><meta charset="utf-8">' +
-        '<meta name="viewport" content="width=device-width, initial-scale=1">' +
-        "<title>" + titel + "</title><style>" + seitenCss() + BASIS_CSS + "</style></head><body>" +
-        "<h1>" + titel + "</h1>" +
-        '<p class="kopf-datum">' + datum.toLocaleString("de-DE") + "</p>" +
-        '<div id="log-summary">' + document.getElementById("log-summary").innerHTML + "</div>" +
-        (tab ? tab.outerHTML : "") +
-        '<div id="log-legend">' + document.getElementById("log-legend").innerHTML + "</div>" +
-        '<p class="fuss">Erstellt mit dem Billard-Turnier-Scoreboard.</p>' +
-        "</body></html>";
-
-      let datei = null;
-      try { datei = new File([html], name, { type: "text/html" }); } catch (e) { /* alte Browser */ }
-
-      if (datei && navigator.canShare && navigator.canShare({ files: [datei] })) {
-        const p = navigator.share({ files: [datei], title: titel });
-        if (p && typeof p.catch === "function") p.catch(() => {});   // Abbruch ist kein Fehler
-        return;
-      }
-
-      const paarZeile = state.player1 + " vs. " + state.player2 + "\n\n";
-      let rumpf = paarZeile + alsText();
-      if (encodeURIComponent(rumpf).length > 1500) {
-        rumpf = paarZeile + summaryText() + "\n\n"
-              + 'Vollstaendiges Protokoll bitte ueber "Drucken" als PDF sichern - '
-              + "es ist fuer den Mailtext zu lang.";
-      }
-      window.location.href = "mailto:?subject=" + encodeURIComponent(titel) +
-                             "&body=" + encodeURIComponent(rumpf);
-    });
-  }
-
-  try { setupShareBtn(); }
-  catch (e) { console.error("Teilen-Knopf nicht verfuegbar:", e); }
-</script>
-
-<script>
-  // Screen Wake Lock – haelt den Bildschirm an (Kiosk). Inline-Variante fuer das
-  // Standalone-Bundle (kein ES-Modul; vgl. js/wake-lock.js im Haupt-Repo).
-  (function () {
-    if (!('wakeLock' in navigator)) return;
-    var lock = null;
-    var acquire = function () {
-      if (lock || document.visibilityState !== 'visible') return;
-      navigator.wakeLock.request('screen').then(function (l) {
-        lock = l;
-        l.addEventListener('release', function () { lock = null; });
-      }).catch(function () { lock = null; });
-    };
-    acquire();
-    document.addEventListener('visibilitychange', function () {
-      if (document.visibilityState === 'visible') acquire();
-    });
-    ['pointerdown', 'keydown', 'touchstart'].forEach(function (ev) {
-      document.addEventListener(ev, acquire, { passive: true });
-    });
-    setInterval(acquire, 30000);
-  })();
-
-  // Vollbild-Umschalter fuer den Kopfzeilen-Button. Inline-Variante fuer das
-  // Standalone-Bundle (kein ES-Modul; vgl. js/fullscreen.js im Haupt-Repo).
-  (function () {
-    var btn = document.getElementById('fsBtn');
-    if (!btn) return;
-    var root = document.documentElement;
-    var canFullscreen = !!(root.requestFullscreen || root.webkitRequestFullscreen);
-    var chromeless = window.navigator.standalone === true ||
-                     window.matchMedia('(display-mode: standalone)').matches ||
-                     window.matchMedia('(display-mode: fullscreen)').matches;
-    if (!canFullscreen || chromeless) { btn.style.display = 'none'; return; }
-
-    function isFullscreen() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
-    function sync() { btn.textContent = isFullscreen() ? '⤡ Beenden' : '⤢ Vollbild'; }
-
-    btn.addEventListener('click', function () {
-      try {
-        var p = isFullscreen()
-          ? (document.exitFullscreen || document.webkitExitFullscreen).call(document)
-          : (root.requestFullscreen || root.webkitRequestFullscreen).call(root);
-        if (p && typeof p.catch === 'function') p.catch(function () {});
-      } catch (e) { /* abgelehnt - Beschriftung bleibt unveraendert */ }
-    });
-
-    ['fullscreenchange', 'webkitfullscreenchange'].forEach(function (ev) {
-      document.addEventListener(ev, sync);
-    });
-    sync();
-  })();
-</script>
 </body>
 </html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#0d88d0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1">
+<title>14.1 Protokoll</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; font-family: Arial, sans-serif; background: #eef0f3; color: #222; }
+
+  #toolbar {
+    background: #1f3b73; color: #fff; display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 16px; position: sticky; top: 0; z-index: 5;
+  }
+  #toolbar .title { font-size: 18px; font-weight: bold; }
+  #toolbar .actions { display: flex; gap: 8px; align-items: center; }
+  #toolbar a { color: #fff; font-size: 13px; text-decoration: none; opacity: .92; }
+  #toolbar button {
+    background: rgba(255,255,255,.16); color: #fff; border: none; border-radius: 7px;
+    padding: 7px 14px; font-size: 14px; cursor: pointer;
+  }
+
+  #sheet {
+    background: #fff; max-width: 800px; margin: 16px auto; border-radius: 10px; overflow: hidden;
+    box-shadow: 0 6px 24px rgba(0,0,0,.15);
+  }
+
+  #summary {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 12px 18px; border-bottom: 1px solid #e6e6e6;
+  }
+  .ls-p { flex: 1; text-align: center; }
+  .ls-name { font-size: 16px; font-weight: bold; }
+  .ls-score { font-size: 34px; font-weight: bold; line-height: 1; }
+  .ls-stats { font-size: 13px; color: #555; margin-top: 3px; }
+  .ls-attable { font-size: 12px; color: #1a7a1a; font-weight: bold; margin-top: 3px; }
+  .ls-target { text-align: center; color: #444; padding: 0 6px; }
+  .ls-target .ls-tv { font-size: 22px; font-weight: bold; }
+
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 15px; text-align: center; }
+  th, td { padding: 6px 2px; }
+  thead th { border-bottom: 1px solid #ddd; }
+  .pz-sub th { font-size: 12px; color: #555; border-bottom: 1px solid #ccc; }
+  .pz-h1 { background: #fbeaea; color: #cc0000; }
+  .pz-h2 { background: #eaeefb; color: #1133cc; }
+  tbody tr:nth-child(even) { background: #fafafa; }
+  .pz-bl { border-left: 2px solid #ccc; }
+  .pz-no { color: #888; }
+  .pz-tot { font-weight: bold; }
+  .pz-f { color: #cc0000; font-weight: bold; }
+  .pz-f3 { color: #a30000; font-weight: bold; }
+  .pz-s { color: #1a7a1a; font-weight: bold; }
+  .pz-v { color: #1133cc; font-weight: bold; }
+  .pz-3frow { background: #fff0f0; }
+  .pz-hs { background: #fff6cc; font-weight: bold; border-radius: 4px; }
+  .pz-live td { background: #eef6ff; font-style: italic; }
+  .pz-live .pz-no { color: #1f3b73; font-style: normal; font-weight: bold; }
+  .pz-livecell { background: #eef6ff; font-style: italic; }
+  .pz-liveno { color: #1f3b73; font-weight: bold; }
+  .pz-liveno, .pz-live .pz-liveno { font-style: normal; }   /* Live-Pfeil ▶ aufrecht, nicht kursiv */
+  .pz-div td { background: #e9eef6; color: #1f3b73; font-size: 13px; font-weight: bold;
+    border-top: 1px solid #cfd6e2; border-bottom: 1px solid #cfd6e2; }
+  .pz-rack td { border-top: 1px solid #cfd6e2; }
+  td.pz-rackmark { background: #e9eef6; color: #1f3b73; font-weight: bold; font-size: 13px; border-radius: 4px; }
+  .pz-empty { color: #888; padding: 18px; }
+
+  #tablewrap { padding: 4px 14px 6px; }
+  #legend { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 10px 18px 16px;
+    border-top: 1px solid #eee; font-size: 12px; color: #666; }
+  #legend .pz-f { color: #cc0000; }
+  #legend .pz-f3 { color: #a30000; }
+  #legend .pz-hs { background: #fff6cc; padding: 1px 6px; border-radius: 4px; }
+  #legend #log-time { margin-left: auto; font-weight: bold; color: #1f3b73; }
+
+  #note { text-align: center; font-size: 12px; color: #888; padding: 0 0 18px; }
+
+  @media print {
+    @page { size: A4 portrait; margin: 12mm; }
+    body { background: #fff; }
+    #toolbar { display: none; }
+    #sheet { box-shadow: none; margin: 0; max-width: 100%; border-radius: 0; }
+    #note { display: none; }
+  }
+</style>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMzAiIGZpbGw9IiMxYTFhMWEiLz4KICA8Y2lyY2xlIGN4PSIyNCIgY3k9IjIyIiByPSI4IiBmaWxsPSIjZmZmZmZmIiBvcGFjaXR5PSIwLjE4Ii8+CiAgPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMTUiIGZpbGw9IiNmZGZkZjIiLz4KICA8dGV4dCB4PSIzMiIgeT0iMzkiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjIyIiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0iIzExMSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+ODwvdGV4dD4KPC9zdmc+Cg==">
+  <script type="module" crossorigin>(function(){const e=document.createElement("link").relList;if(e&&e.supports&&e.supports("modulepreload"))return;for(const o of document.querySelectorAll('link[rel="modulepreload"]'))r(o);new MutationObserver(o=>{for(const s of o)if(s.type==="childList")for(const i of s.addedNodes)i.tagName==="LINK"&&i.rel==="modulepreload"&&r(i)}).observe(document,{childList:!0,subtree:!0});function n(o){const s={};return o.integrity&&(s.integrity=o.integrity),o.referrerPolicy&&(s.referrerPolicy=o.referrerPolicy),o.crossOrigin==="use-credentials"?s.credentials="include":o.crossOrigin==="anonymous"?s.credentials="omit":s.credentials="same-origin",s}function r(o){if(o.ep)return;o.ep=!0;const s=n(o);fetch(o.href,s)}})();function _(){const t=document.getElementById("app");if(!t)return;const e="";t.style.height=e,t.style.minHeight=e}window.addEventListener("resize",_);let z="offline",w="1";async function j(){const t=new URLSearchParams(window.location.search),e=t.get("table"),n=e&&/^[1-9]\d*$/.test(e)?e:null;return t.get("partie"),z="offline",w=n??"1",{betriebsart:z,tisch:w}}function O(){return z==="angebunden"}const H={};function N(t,e){return{pfad:e}}async function R(){}const E=new Map,F=new Map;function U(t,e){F.set(t,e);const n=e==null?null:structuredClone(e);(E.get(t)??new Set).forEach(r=>r({val:()=>n}))}function V(t){const e=/^tables\/(\d+)$/.exec(t);return e?e[1]:null}const D=t=>`cuedesk-scoreboard-tisch-${t}`;function K(t,e){const n=E.get(t.pfad)??new Set;if(n.add(e),E.set(t.pfad,n),t.pfad==="tournament/active"||t.pfad==="tournament/active/status"||t.pfad==="tournament/tvView"||t.pfad==="tournament_archive")return queueMicrotask(()=>e({val:()=>null})),()=>n.delete(e);if(t.pfad.startsWith("tournament/")||t.pfad==="system/tvSettings")return queueMicrotask(()=>e({val:()=>null})),()=>n.delete(e);if(t.pfad==="tables")return queueMicrotask(()=>e({val:()=>null})),()=>n.delete(e);const r=V(t.pfad);if(!r)return()=>n.delete(e);if(!O()&&z!=="zuschauer"){let o=null;try{const s=localStorage.getItem(D(r));o=s?JSON.parse(s):null}catch{o=null}return queueMicrotask(()=>U(t.pfad,o)),()=>n.delete(e)}return Z(),()=>n.delete(e)}async function Z(t){}function $(){if(!("wakeLock"in navigator)){console.info('[wake-lock] Screen Wake Lock nicht unterstuetzt – ggf. Auto-Sperre am Geraet manuell auf "Nie" stellen.');return}let t=null;const e=async()=>{if(!(t||document.visibilityState!=="visible"))try{t=await navigator.wakeLock.request("screen"),t.addEventListener("release",()=>{t=null})}catch{t=null}};e(),document.addEventListener("visibilitychange",()=>{document.visibilityState==="visible"&&e()}),["pointerdown","keydown","touchstart"].forEach(n=>document.addEventListener(n,e,{passive:!0})),setInterval(e,3e4)}const G=/(^|[\s,>])(#log-|\.pz-|\.ls-|#ptable|#summary|#legend)/;function W(){const t=[];for(const e of Array.from(document.styleSheets)){let n;try{n=e.cssRules}catch{continue}if(n)for(const r of Array.from(n))r.selectorText&&G.test(r.selectorText)&&t.push(r.cssText)}return t.join(`
+`)}const J=`
+  body { font-family: Arial, sans-serif; background: #fff; color: #222; margin: 16px; }
+  h1 { font-size: 18px; margin: 0 0 2px; }
+  .kopf-datum { font-size: 12px; color: #666; margin: 0 0 14px; }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed;
+          font-size: 14px; text-align: center; }
+  th, td { padding: 5px 2px; border-bottom: 1px solid #eee; }
+  thead th { background: #f4f4f4; }
+  .fuss { margin-top: 14px; font-size: 11px; color: #888; }
+  @page { size: A4 portrait; margin: 12mm; }
+`;function L(t){const e=document.getElementById(t);return e?e.innerHTML:""}function B(t){const e=document.getElementById(t);if(!e)return"";const n=[];e.querySelectorAll(".ls-p").forEach(o=>{const s=i=>{const c=o.querySelector(i);return c?c.textContent.trim():""};n.push([s(".ls-name"),s(".ls-score"),s(".ls-stats")].filter(Boolean).join("  "))});const r=e.querySelector(".ls-target");if(r){const o=Array.from(r.children).map(s=>s.textContent.trim()).filter(Boolean).join(" · ");o&&n.push(o)}return n.length?n.filter(Boolean).join(`
+`):e.textContent.replace(/\s+/g," ").trim()}function Q(t){const e=document.getElementById(t);if(!e)return"";const n=Array.from(e.querySelectorAll(".ls-name")).map(r=>r.textContent.trim()).filter(Boolean);return n.length===2?n[0]+" vs. "+n[1]:""}function X(t,e){const n=[],r=B(e);r&&n.push(r,"");const o=document.getElementById(t);if(o){const s=o.querySelector("thead tr:last-child"),c=(s?[s]:[]).concat(Array.from(o.querySelectorAll("tbody tr"))).map(p=>Array.from(p.cells).map(m=>m.textContent.trim())),f=[];c.forEach(p=>p.forEach((m,h)=>{f[h]=Math.max(f[h]||0,m.length)})),c.forEach(p=>n.push(p.map((m,h)=>m.padEnd(f[h])).join("  ").trimEnd()))}return n.join(`
+`)}function Y(t){return String(t).replace(/ä/g,"ae").replace(/ö/g,"oe").replace(/ü/g,"ue").replace(/Ä/g,"Ae").replace(/Ö/g,"Oe").replace(/Ü/g,"Ue").replace(/ß/g,"ss").replace(/[^A-Za-z0-9._-]+/g,"-").replace(/-+/g,"-").replace(/_+/g,"_").replace(/^[-_]+|[-_]+$/g,"")}function tt(t){try{et(t)}catch(e){console.error("Teilen-Knopf nicht verfuegbar:",e)}}function et(t){const e=t||{},n=document.getElementById(e.btnId||"log-share");if(!n)return;const r=o=>typeof o=="function"?o():o;n.addEventListener("click",()=>{const o=r(e.titel)||"Protokoll",s=Q(e.summaryId||"log-summary"),i=s?o+" - "+s:o,c=new Date,f=c.toISOString().slice(0,10),p=Y(r(e.dateiBasis)||o)+"_"+f+".html",m=(W()||"")+J,h='<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>'+i+"</title><style>"+m+"</style></head><body><h1>"+i+'</h1><p class="kopf-datum">'+c.toLocaleString("de-DE")+'</p><div id="'+(e.summaryId||"log-summary")+'">'+L(e.summaryId||"log-summary")+"</div>"+(document.getElementById(e.tableId||"log-table")?document.getElementById(e.tableId||"log-table").outerHTML:"")+'<div id="'+(e.legendId||"log-legend")+'">'+L(e.legendId||"log-legend")+'</div><p class="fuss">Erstellt mit dem Billard-Turnier-Scoreboard.</p></body></html>';let g=null;try{g=new File([h],p,{type:"text/html"})}catch{}if(g&&navigator.canShare&&navigator.canShare({files:[g]})){const d=navigator.share({files:[g],title:i});d&&typeof d.catch=="function"&&d.catch(()=>{});return}const l='Vollstaendiges Protokoll bitte ueber "Drucken" als PDF sichern - es ist fuer den Mailtext zu lang.',a=s?s+`
+
+`:"";let u=a+X(e.tableId||"log-table",e.summaryId||"log-summary");encodeURIComponent(u).length>1500&&(u=a+B(e.summaryId||"log-summary")+`
+
+`+l),window.location.href="mailto:?subject="+encodeURIComponent(i)+"&body="+encodeURIComponent(u)})}R().catch(t=>console.error("Anmeldung fehlgeschlagen:",t));$();const{tisch:k}=await j();document.getElementById("tbtitle").textContent="📋 14.1 Protokoll — Tisch "+k;document.getElementById("boardlink").href="index141.html?table="+encodeURIComponent(k);const nt=()=>Array.from(document.querySelectorAll("#summary .ls-name")).map(t=>t.textContent.trim()).join("-vs-");try{tt({btnId:"log-share",summaryId:"summary",tableId:"ptable",legendId:"legend",titel:()=>"14.1 Protokoll - Tisch "+k,dateiBasis:()=>"14.1-Protokoll_Tisch"+k+"_"+nt()})}catch(t){console.error("Teilen-Knopf nicht verfuegbar:",t)}function S(t){return String(t??"").replace(/[&<>"]/g,e=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[e])}function T(t,e,n,r,o,s){const i=(e/(r||1)).toFixed(1);return'<div class="ls-p"><div class="ls-name" style="color:'+o+'">'+S(t)+'</div><div class="ls-score" style="color:'+o+'">'+e+'</div><div class="ls-stats">HS '+n+" · Aufn. "+r+" · Ø "+i+'</div><div class="ls-attable">'+(s?"● am Tisch":"&nbsp;")+"</div></div>"}let C=null;function M(){const t=document.getElementById("log-time");if(!t)return;const e=C;if(!e||!e.startedAt){t.textContent="Spielzeit —";return}const n=Math.max(0,Math.floor(((e.endedAt||Date.now())-e.startedAt)/6e4));t.textContent="Spielzeit "+Math.floor(n/60)+":"+String(n%60).padStart(2,"0")+" h"}setInterval(M,3e4);function ot(t){C=t,M();const e=document.getElementById("summary"),n=document.getElementById("ptable");if(!t||t.gameType!=="14.1"){e.innerHTML='<div class="ls-p" style="color:#888;">An Tisch '+S(k)+" läuft gerade kein 14.1-Spiel.</div>",n.innerHTML="";return}const r=l=>typeof l=="number"?l:0;e.innerHTML=T(t.player1||"Spieler 1",r(t.s1),r(t.high1),r(t.inn1),"#cc0000",!t.locked&&t.turn===1)+'<div class="ls-target"><div style="font-size:16.5px;font-weight:bold;">Ziel: '+r(t.target)+" Pkt.</div>"+(r(t.targetInn)>0?'<div style="font-size:16.5px;font-weight:bold;">'+r(t.targetInn)+" Aufn.</div>":"")+"</div>"+T(t.player2||"Spieler 2",r(t.s2),r(t.high2),r(t.inn2),"#1133cc",!t.locked&&t.turn===2);const o=Array.isArray(t.log)?t.log:[],s=r(t.high1),i=r(t.high2),c=[],f=l=>c[l]||(c[l]={n:l,p1:null,p2:null,live1:null,live2:null});let p=0,m=0;if(o.forEach(l=>{l.t!=="rack"&&(l.p===1?f(++p).p1=l:f(++m).p2=l)}),!t.locked){const l=t.turn,a=r(l===1?t.run1:t.run2),u=Array.isArray(t.rackPts)?t.rackPts:[],d={segs:u.concat(a-u.reduce((b,v)=>b+v,0)),total:r(l===1?t.s1:t.s2)},y=(l===1?p:m)+1;l===1?f(y).live1=d:f(y).live2=d}const h=(l,a,u,d)=>{const y=u?"pz-bl":"";if(l){const b=l.kind==="foul"||l.kind==="foul3"||l.kind==="break",v=l.kind==="foul3"?"pz-f3":l.kind==="foul"||l.kind==="break"?"pz-f":"",I=b?v:"",P=l.pkt===d&&l.pkt>0?" pz-hs":"",q=l.segs&&l.segs.length>1?l.segs.join("/"):l.pkt;let x=l.mark||"",A=v;return l.kind==="safety"?(x="S",A="pz-s"):l.kind==="run"&&(x="V",A="pz-v"),'<td class="'+(y+" "+A).trim()+'">'+x+'</td><td class="'+(I+P).trim()+'">'+q+'</td><td class="pz-tot">'+l.total+"</td>"}if(a){const b=a.segs&&a.segs.length>1?a.segs.join("/"):a.segs[0];return'<td class="'+(y+" pz-livecell pz-liveno").trim()+'">▶</td><td class="pz-livecell">'+b+'</td><td class="pz-tot pz-livecell">'+a.total+"</td>"}return'<td class="'+y+'"></td><td></td><td></td>'};let g="";for(let l=1;l<c.length;l++){const a=c[l];if(!a)continue;const u=!!(a.live1||a.live2),d=u&&!a.p1&&!a.p2,y=a.p1&&a.p1.kind==="foul3"||a.p2&&a.p2.kind==="foul3",b=d?' class="pz-live"':y?' class="pz-3frow"':"",v=u&&!d?"pz-no pz-liveno":"pz-no",I=""+l;g+="<tr"+b+'><td class="'+v+'">'+I+"</td>"+h(a.p1,a.live1,!1,s)+h(a.p2,a.live2,!0,i)+"</tr>"}g||(g='<tr><td colspan="7" class="pz-empty">Noch keine Aufnahmen.</td></tr>'),n.innerHTML='<colgroup><col style="width:9%"><col style="width:8%"><col style="width:14%"><col style="width:15%"><col style="width:8%"><col style="width:14%"><col style="width:15%"></colgroup><thead><tr><th>Aufn.</th><th colspan="3" class="pz-h1">'+S(t.player1||"Spieler 1")+' (Rot)</th><th colspan="3" class="pz-h2 pz-bl">'+S(t.player2||"Spieler 2")+' (Blau)</th></tr><tr class="pz-sub"><th>Nr.</th><th>F</th><th>Pkt.</th><th>Gesamt</th><th class="pz-bl">F</th><th>Pkt.</th><th>Gesamt</th></tr></thead><tbody>'+g+"</tbody>"}K(N(H,"tables/"+k),t=>ot(t.val()));</script>
+</head>
+
+<body>
+  <div id="toolbar">
+    <div class="title" id="tbtitle">📋 14.1 Protokoll</div>
+    <div class="actions">
+      <a id="boardlink" href="#">↩ Zum Board</a>
+      <button type="button" onclick="window.print()">🖨 Drucken</button>
+      <button id="log-share" type="button">📤 Senden</button>
+    </div>
+  </div>
+
+  <div id="sheet">
+    <div id="summary"></div>
+    <div id="tablewrap"><table id="ptable"></table></div>
+    <div id="legend">
+      <span><b class="pz-f">/</b> 1. Foul</span>
+      <span><b class="pz-f">//</b> 2. Foul</span>
+      <span><b class="pz-f3">3F</b> drei Fouls (−15)</span>
+      <span><b class="pz-f">−2</b> Eröffnungsfoul</span>
+      <span><b style="color:#1a7a1a;">S</b> Sicherheit</span>
+      <span><b style="color:#1133cc;">V</b> Verschossen</span>
+      <span><b>HS</b> = Höchstserie <span class="pz-hs">(gelb markiert)</span></span>
+      <span><b style="color:#1f3b73;">▶</b> laufende Aufnahme</span>
+      <span id="log-time"></span>
+    </div>
+  </div>
+  <div id="note">Diese Seite aktualisiert sich automatisch (Live-Stand). Nur Ansicht – kein Schreibzugriff.</div>
+
+</body>
+</html>
